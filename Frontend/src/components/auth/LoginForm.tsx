@@ -22,6 +22,7 @@ import {
   HoverLift,
   FadeIn,
 } from '@/components/ui/motion'
+import { UserRoles } from '@/types'
 
 const loginSchema = z.object({
   identifier: z.string().min(1, 'Email or phone number is required'),
@@ -68,6 +69,7 @@ export function LoginForm({ onSuccess, redirectTo = '/' }: LoginFormProps) {
       const { token, user } = loginMutation.data?.data || {}
       if (token && user) {
         localStorage.setItem('token', token);
+        document.cookie = `token=${token}; path=/; max-age=604800`;
         setUser(user);
 
         showSuccess('Login Successful', `Welcome back, ${user.firstName}!`)
@@ -91,17 +93,23 @@ export function LoginForm({ onSuccess, redirectTo = '/' }: LoginFormProps) {
 
       if (token && user) {
         localStorage.setItem('token', token);
+        document.cookie = `token=${token}; path=/; max-age=604800`;
         setUser(user);
 
         showSuccess('Login Successful', `Welcome back, ${user.firstName}!`)
 
         if (onSuccess) {
           onSuccess(user, token)
-        } else {
-          const userRole = user.role?.toLowerCase() || 'customer'
-          const path = redirectTo && redirectTo !== '/' ? redirectTo :
-            userRole === 'customer' ? '/customer/dashboard' : `/${userRole}`
-          router.push(path)
+        }
+
+        if (user.role === UserRoles.ADMIN) {
+          router.push('/admin')
+          return;
+        }
+
+        else if (user.role === UserRoles.CUSTOMER) {
+          router.push('/customer/dashboard')
+          return;
         }
       }
     }

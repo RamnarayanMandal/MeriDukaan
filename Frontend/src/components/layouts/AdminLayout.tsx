@@ -85,13 +85,13 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     }
 
     const shareOnWhatsApp = () => {
-      const text = encodeURIComponent(`Check out ${settings.shopName}: ${websiteUrl}`)
+      const text = encodeURIComponent(`Check out ${settings.shopName}!\n\nVisit Website: ${websiteUrl}\nDownload Mobile App: ${websiteUrl}/download`)
       window.open(`https://wa.me/?text=${text}`, '_blank')
     }
 
     const shareViaEmail = () => {
       const subject = encodeURIComponent(`Check out ${settings.shopName}`)
-      const body = encodeURIComponent(`I thought you might be interested in ${settings.shopName}. Visit here: ${websiteUrl}`)
+      const body = encodeURIComponent(`I thought you might be interested in ${settings.shopName}.\n\nVisit Website: ${websiteUrl}\nDownload Mobile App: ${websiteUrl}/download`)
       window.location.href = `mailto:?subject=${subject}&body=${body}`
     }
 
@@ -177,26 +177,52 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                   <DialogHeader>
                     <DialogTitle className="text-xl font-bold flex items-center gap-2">
                       <Share2 className="h-5 w-5 text-blue-600" />
-                      Share Website
+                      Share
                     </DialogTitle>
                   </DialogHeader>
                   <div className="space-y-6 py-4">
-                    <div className="flex items-center space-x-2">
-                      <div className="grid flex-1 gap-2">
-                        <Input
-                          id="link"
-                          defaultValue={websiteUrl}
-                          readOnly
-                          className="bg-gray-50 border-gray-200 rounded-xl"
-                        />
+                    {/* Website Link Section */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700">Website Link</label>
+                      <div className="flex items-center space-x-2">
+                        <div className="grid flex-1 gap-2">
+                          <Input
+                            id="link"
+                            defaultValue={websiteUrl}
+                            readOnly
+                            className="bg-gray-50 border-gray-200 rounded-xl"
+                          />
+                        </div>
+                        <Button size="sm" className="px-3 rounded-xl bg-blue-600 hover:bg-blue-700" onClick={handleCopyLink}>
+                          <span className="sr-only">Copy</span>
+                          {isCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                        </Button>
                       </div>
-                      <Button size="sm" className="px-3 rounded-xl bg-blue-600 hover:bg-blue-700" onClick={handleCopyLink}>
-                        <span className="sr-only">Copy</span>
-                        {isCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                      </Button>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    {/* App Download Link Section */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700">App Download Link</label>
+                      <div className="flex items-center space-x-2">
+                        <div className="grid flex-1 gap-2">
+                          <Input
+                            id="app-link"
+                            defaultValue={`${websiteUrl}/download`}
+                            readOnly
+                            className="bg-gray-50 border-gray-200 rounded-xl"
+                          />
+                        </div>
+                        <Button size="sm" className="px-3 rounded-xl bg-blue-600 hover:bg-blue-700" onClick={() => {
+                          navigator.clipboard.writeText(`${websiteUrl}/download`)
+                          showSuccess("Copied!", "App download link copied")
+                        }}>
+                          <span className="sr-only">Copy App Link</span>
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 pt-2">
                       <Button 
                         variant="outline" 
                         className="rounded-2xl h-12 gap-2 border-green-100 hover:bg-green-50 hover:text-green-600 hover:border-green-200"

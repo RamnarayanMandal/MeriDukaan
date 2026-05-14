@@ -237,18 +237,18 @@ export const AppointmentTable: React.FC<AppointmentTableProps> = ({
                       <StatusBadge status={appointment.status} />
                     </TableCell>
                     <TableCell className="py-4 px-6 text-right">
-                      <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex justify-end gap-1">
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-9 w-9 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-xl"
+                          className="h-9 w-9 text-blue-600 hover:text-blue-700 hover:bg-transparent rounded-xl"
                           onClick={() => onChat(appointment._id)}
                         >
                           <MessageSquare className="w-4.5 h-4.5" />
                         </Button>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl">
+                            <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl hover:bg-transparent">
                               <MoreHorizontal className="w-4.5 h-4.5" />
                             </Button>
                           </DropdownMenuTrigger>

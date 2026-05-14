@@ -31,7 +31,14 @@ export async function generateMetadata(): Promise<Metadata> {
       authors: [{ name: settings.shopName }],
       creator: settings.shopName,
       icons: {
-        icon: settings.favicon || "/favicon.ico",
+        icon: [
+          { url: settings.favicon || "/favicon.ico" },
+          { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+          { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+          { url: settings.logo || "/logo.png", sizes: "512x512", type: "image/png" },
+        ],
+        apple: settings.logo || "/apple-touch-icon.png",
+        shortcut: settings.favicon || "/favicon.ico",
       },
       openGraph: {
         type: "website",

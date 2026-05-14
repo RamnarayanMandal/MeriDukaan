@@ -20,9 +20,17 @@ export function Navbar() {
   const { data: notificationData } = useNotifications();
   const unreadCount = notificationData?.unreadCount || 0;
 
-  const handleAuthSuccess = () => {
+  const handleAuthSuccess = (userData?: any) => {
     setIsAuthModalOpen(false);
     router.refresh();
+    
+    // Use the passed userData or the current state user
+    const currentUser = userData || user;
+    if (currentUser?.role === UserRoles.ADMIN) {
+      router.push('/admin');
+    } else if (currentUser?.role === UserRoles.CUSTOMER) {
+      router.push('/customer/dashboard');
+    }
   };
 
 
@@ -33,12 +41,7 @@ export function Navbar() {
         <div className="flex h-16 justify-between items-center">
           {/* Logo */}
           <div className="flex flex-shrink-0 items-center cursor-pointer" onClick={() => router.push("/")}>
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600 text-white shadow-sm shadow-blue-200">
-              <Wrench className="h-6 w-6" />
-            </div>
-            <span className="ml-3 text-xl font-bold tracking-tight text-gray-900">
-              Mukesh Auto
-            </span>
+            <img src="/logo.png" alt="Logo" className="h-16 w-30 object-cover rounded-full" />
           </div>
 
           {/* Desktop Navigation */}
@@ -79,10 +82,14 @@ export function Navbar() {
                     Logout
                   </Button>
                   <Button size="sm" className="rounded-lg h-9 bg-blue-600 hover:bg-blue-700 shadow-sm" onClick={() => {
-                    if (user?.role === UserRoles.CUSTOMER) {
-                      router.push('/customer/dashboard');
-                    } else {
+                    if (user?.role === UserRoles.ADMIN) {
                       router.push('/admin');
+                      return;
+                    }
+
+                    else {
+                      router.push('/customer/dashboard');
+                      return;
                     }
                   }}>
                     Dashboard

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useInvoice } from "@/hooks/useInvoices";
 import { useSettings } from "@/context/ShopSettingsContext";
@@ -14,6 +14,7 @@ import {
   Phone,
   Building2 
 } from "lucide-react";
+import html2pdf from "html2pdf.js";
 
 export default function InvoiceDetailPage() {
   const router = useRouter();
@@ -23,9 +24,28 @@ export default function InvoiceDetailPage() {
   const { data: invoice, isLoading: isInvoiceLoading } = useInvoice(invoiceId);
   const { settings, isLoading: isSettingsLoading } = useSettings();
   const printRef = useRef<HTMLDivElement>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleDownloadPDF = () => {
+    if (!printRef.current || !invoice) return;
+    setIsDownloading(true);
+
+    const element = printRef.current;
+    const opt = {
+      margin:       0.5,
+      filename:     `invoice-${invoice.invoiceNumber}.pdf`,
+      image:        { type: 'jpeg' as const, quality: 0.98 },
+      html2canvas:  { scale: 2, useCORS: true },
+      jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' as const }
+    };
+
+    html2pdf().set(opt).from(element).save().then(() => {
+      setIsDownloading(false);
+    });
   };
 
   const isLoading = isInvoiceLoading || isSettingsLoading;
@@ -79,8 +99,17 @@ export default function InvoiceDetailPage() {
           <Button variant="outline" onClick={handlePrint}>
             <Printer className="h-4 w-4 mr-2" /> Print
           </Button>
-          <Button className="bg-blue-600 hover:bg-blue-700">
-            <Download className="h-4 w-4 mr-2" /> Download PDF
+          <Button 
+            className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
+            onClick={handleDownloadPDF}
+            disabled={isDownloading}
+          >
+            {isDownloading ? (
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+            ) : (
+              <Download className="h-4 w-4 mr-2" />
+            )}
+            {isDownloading ? "Generating PDF..." : "Download PDF"}
           </Button>
         </div>
       </div>

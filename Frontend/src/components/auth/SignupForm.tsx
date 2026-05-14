@@ -87,14 +87,28 @@ export function SignupForm({ onSuccess, defaultRole = UserRoles.CUSTOMER }: Sign
   React.useEffect(() => {
     if (signupMutation.isSuccess) {
       const { token, user } = signupMutation.data?.data || {};
+      if (token) {
+        localStorage.setItem('token', token);
+        document.cookie = `token=${token}; path=/; max-age=604800`;
+      }
+      
       if (onSuccess && token && user) {
         onSuccess(user, token);
-      } else if (!onSuccess) {
-        showSuccess('Account Created Successfully!', 'You can now log in to your account.')
+      } else if (!onSuccess && user) {
+        showSuccess('Account Created Successfully!', `Welcome, ${user?.firstName}!`)
         setTimeout(() => {
-          // If we are in the AuthModal, it will be handled by onSuccess
-          // If we are on a standalone page, redirect to login
-          router.push('/auth/login')
+          if (user?.role === UserRoles.ADMIN) {
+            router.push('/admin')
+          }
+
+          else if (user?.role === UserRoles.CUSTOMER) {
+            router.push('/customer/dashboard')
+          }
+
+          else {
+            router.push('/auth/login')
+            return;
+          }
         }, 2000)
       }
     }
@@ -110,8 +124,15 @@ export function SignupForm({ onSuccess, defaultRole = UserRoles.CUSTOMER }: Sign
         if (onSuccess) {
           onSuccess(user, token)
         } else {
-          const userRole = user.role?.toLowerCase() || 'customer'
-          router.push(userRole === 'customer' ? '/customer/dashboard' : `/${userRole}`)
+          if (user.role === UserRoles.ADMIN) {
+            router.push('/admin')
+            return;
+          }
+
+          else if (user.role === UserRoles.CUSTOMER) {
+            router.push('/customer/dashboard')
+            return;
+          }
         }
       }
     }

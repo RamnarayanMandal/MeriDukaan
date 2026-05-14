@@ -77,35 +77,35 @@ export default function InvoicesPage() {
   };
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="flex justify-between items-center mb-6">
+    <div className="container mx-auto p-4 sm:p-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-bold">Smart Invoices</h1>
-          <p className="text-gray-600 mt-1">Manage billing for services and parts</p>
+          <h1 className="text-2xl sm:text-3xl font-bold">Smart Invoices</h1>
+          <p className="text-gray-600 text-sm sm:text-base mt-1">Manage billing for services and parts</p>
         </div>
         <Button
           onClick={() => router.push("/admin/invoices/new")}
-          className="bg-blue-600 hover:bg-blue-700"
+          className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto"
         >
           <Plus className="h-4 w-4 mr-2" />
           Create Invoice
         </Button>
       </div>
 
-      <Card className="mb-6">
+      <Card className="mb-6 rounded-2xl border-none shadow-sm bg-gray-50/50">
         <CardContent className="pt-6">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
-                placeholder="Search by invoice number, name, phone..."
+                placeholder="Search invoices..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-10 w-full"
+                className="pl-10 w-full rounded-xl bg-white border-gray-200"
               />
             </div>
             <Select value={status} onValueChange={setStatus}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-full md:w-[180px] rounded-xl bg-white border-gray-200">
                 <SelectValue placeholder="Payment Status" />
               </SelectTrigger>
               <SelectContent>
@@ -118,108 +118,150 @@ export default function InvoicesPage() {
           </div>
         </CardContent>
       </Card>
-
       {isLoading ? (
         <div className="flex justify-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
         </div>
       ) : data &&
         (Array.isArray(data) ? data.length > 0 : data.invoices?.length > 0) ? (
-        <div className="bg-white rounded-lg shadow overflow-hidden border border-gray-100">
-          <table className="w-full text-sm text-left">
-            <thead className="bg-gray-50 border-b">
-              <tr>
-                <th className="px-6 py-4 font-semibold text-gray-900">
-                  Invoice No.
-                </th>
-                <th className="px-6 py-4 font-semibold text-gray-900">Date</th>
-                <th className="px-6 py-4 font-semibold text-gray-900">
-                  Customer
-                </th>
-                <th className="px-6 py-4 font-semibold text-gray-900">
-                  Total Amount
-                </th>
-                <th className="px-6 py-4 font-semibold text-gray-900">Status</th>
-                <th className="px-6 py-4 font-semibold text-gray-900 text-right">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {(Array.isArray(data) ? data : data.invoices).map((inv: any) => (
-                <tr
-                  key={inv._id}
-                  className="hover:bg-blue-50/30 transition-colors"
-                >
-                  <td className="px-6 py-4 font-medium text-blue-600">
-                    #{inv.invoiceNumber}
-                  </td>
-                  <td className="px-6 py-4">
-                    {new Date(inv.createdAt).toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="font-medium">{inv.customerName}</div>
-                    <div className="text-xs text-gray-500">
-                      {inv.customerPhone}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 font-semibold">
-                    ₹{inv.grandTotal}
-                  </td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={`px-2.5 py-1 rounded-full text-xs font-bold border ${
-                        inv.paymentStatus === "paid"
-                          ? "bg-green-50 text-green-700 border-green-200"
-                          : inv.paymentStatus === "partial"
+        <div className="space-y-4">
+          {/* Mobile Card List */}
+          <div className="grid grid-cols-1 gap-4 md:hidden">
+            {(Array.isArray(data) ? data : data.invoices).map((inv: any) => (
+              <div
+                key={inv._id}
+                className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col gap-3"
+              >
+                <div className="flex justify-between items-start">
+                  <div>
+                    <div className="text-blue-600 font-bold">#{inv.invoiceNumber}</div>
+                    <div className="text-xs text-gray-500">{new Date(inv.createdAt).toLocaleDateString()}</div>
+                  </div>
+                  <span
+                    className={`px-2.5 py-1 rounded-full text-[10px] font-bold border ${inv.paymentStatus === "paid"
+                        ? "bg-green-50 text-green-700 border-green-200"
+                        : inv.paymentStatus === "partial"
                           ? "bg-yellow-50 text-yellow-700 border-yellow-200"
                           : "bg-red-50 text-red-700 border-red-200"
                       }`}
-                    >
-                      {inv.paymentStatus.toUpperCase()}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-48">
-                        <DropdownMenuItem
-                          onClick={() => router.push(`/admin/invoices/${inv._id}`)}
-                        >
-                          <FileText className="h-4 w-4 mr-2" /> View Details
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() =>
-                            router.push(`/admin/invoices/edit/${inv._id}`)
-                          }
-                        >
-                          <Edit className="h-4 w-4 mr-2" /> Update Invoice
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => handleWhatsApp(inv)}
-                          className="text-green-600"
-                        >
-                          <MessageSquare className="h-4 w-4 mr-2" /> Send to
-                          WhatsApp
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={() => handleDelete(inv._id)}
-                          className="text-red-600 font-medium"
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" /> Delete Invoice
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </td>
+                  >
+                    {inv.paymentStatus.toUpperCase()}
+                  </span>
+                </div>
+
+                <div className="flex justify-between items-center py-2 border-y border-gray-50">
+                  <div>
+                    <div className="font-semibold text-gray-900">{inv.customerName}</div>
+                    <div className="text-xs text-gray-500">{inv.customerPhone}</div>
+                  </div>
+                  <div className="text-lg font-bold text-gray-900">₹{inv.grandTotal}</div>
+                </div>
+
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 rounded-lg h-9 gap-2"
+                    onClick={() => router.push(`/admin/invoices/${inv._id}`)}
+                  >
+                    <FileText className="h-4 w-4" /> View
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 rounded-lg h-9 gap-2 text-green-600 border-green-100 hover:bg-green-50"
+                    onClick={() => handleWhatsApp(inv)}
+                  >
+                    <MessageSquare className="h-4 w-4" /> WhatsApp
+                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg border">
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuItem onClick={() => router.push(`/admin/invoices/edit/${inv._id}`)}>
+                        <Edit className="h-4 w-4 mr-2" /> Update Invoice
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => handleDelete(inv._id)}
+                        className="text-red-600"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" /> Delete Invoice
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="hidden md:block bg-white rounded-lg shadow overflow-hidden border border-gray-100">
+            <table className="w-full text-sm text-left">
+              <thead className="bg-gray-50 border-b">
+                <tr>
+                  <th className="px-6 py-4 font-semibold text-gray-900">Invoice No.</th>
+                  <th className="px-6 py-4 font-semibold text-gray-900">Date</th>
+                  <th className="px-6 py-4 font-semibold text-gray-900">Customer</th>
+                  <th className="px-6 py-4 font-semibold text-gray-900">Total Amount</th>
+                  <th className="px-6 py-4 font-semibold text-gray-900">Status</th>
+                  <th className="px-6 py-4 font-semibold text-gray-900 text-right">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {(Array.isArray(data) ? data : data.invoices).map((inv: any) => (
+                  <tr key={inv._id} className="hover:bg-blue-50/30 transition-colors">
+                    <td className="px-6 py-4 font-medium text-blue-600">#{inv.invoiceNumber}</td>
+                    <td className="px-6 py-4">{new Date(inv.createdAt).toLocaleDateString()}</td>
+                    <td className="px-6 py-4">
+                      <div className="font-medium text-gray-900">{inv.customerName}</div>
+                      <div className="text-xs text-gray-500">{inv.customerPhone}</div>
+                    </td>
+                    <td className="px-6 py-4 font-semibold">₹{inv.grandTotal}</td>
+                    <td className="px-6 py-4">
+                      <span
+                        className={`px-2.5 py-1 rounded-full text-xs font-bold border ${inv.paymentStatus === "paid"
+                            ? "bg-green-50 text-green-700 border-green-200"
+                            : inv.paymentStatus === "partial"
+                              ? "bg-yellow-50 text-yellow-700 border-yellow-200"
+                              : "bg-red-50 text-red-700 border-red-200"
+                          }`}
+                      >
+                        {inv.paymentStatus.toUpperCase()}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8  rounded-full">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48">
+                          <DropdownMenuItem onClick={() => router.push(`/admin/invoices/${inv._id}`)}>
+                            <FileText className="h-4 w-4 mr-2" /> View Details
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => router.push(`/admin/invoices/edit/${inv._id}`)}>
+                            <Edit className="h-4 w-4 mr-2" /> Update Invoice
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleWhatsApp(inv)} className="text-green-600">
+                            <MessageSquare className="h-4 w-4 mr-2" /> Send to WhatsApp
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => handleDelete(inv._id)} className="text-red-600">
+                            <Trash2 className="h-4 w-4 mr-2" /> Delete Invoice
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       ) : (
         <Card>
