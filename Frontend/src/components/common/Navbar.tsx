@@ -79,7 +79,11 @@ export function Navbar() {
                     Logout
                   </Button>
                   <Button size="sm" className="rounded-lg h-9 bg-blue-600 hover:bg-blue-700 shadow-sm" onClick={() => {
-                    user?.role === UserRoles.CUSTOMER ? router.push('/customer/dashboard') : router.push('/admin')
+                    if (user?.role === UserRoles.CUSTOMER) {
+                      router.push('/customer/dashboard');
+                    } else {
+                      router.push('/admin');
+                    }
                   }}>
                     Dashboard
                   </Button>
@@ -158,7 +162,11 @@ export function Navbar() {
                 </div>
                 <Button className="w-full justify-center h-12 text-base font-bold bg-blue-600 hover:bg-blue-700 rounded-xl" onClick={() => {
                   setIsMobileMenuOpen(false);
-                  user?.role === 'customer' ? router.push('/customer/dashboard') : router.push('/admin')
+                  if (user?.role === UserRoles.CUSTOMER) {
+                    router.push('/customer/dashboard');
+                  } else {
+                    router.push('/admin');
+                  }
                 }}>
                   Dashboard
                 </Button>

@@ -50,7 +50,9 @@ export default function CustomerProfilePage() {
         lastName: userToUse.lastName || '',
         email: userToUse.email || '',
         phone: (userToUse as any).phone || (userToUse as any).phoneNumber || '',
-        bikeModel: (userToUse as any).bikeModel || ''
+        bikeModel: Array.isArray((userToUse as any).bikeModel) 
+          ? (userToUse as any).bikeModel.join(', ') 
+          : (userToUse as any).bikeModel || ''
       });
     }
   }, [profile, user]);
@@ -60,9 +62,9 @@ export default function CustomerProfilePage() {
     const updateData = {
       firstName: profileData.firstName,
       lastName: profileData.lastName,
-      phone: profileData.phone,
+      phoneNumber: profileData.phone,
       email: profileData.email,
-      bikeModel: profileData.bikeModel
+      bikeModel: profileData.bikeModel.split(',').map(m => m.trim()).filter(Boolean)
     };
 
     updateProfile.mutate(updateData, {

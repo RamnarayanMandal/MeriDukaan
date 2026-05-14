@@ -2,12 +2,12 @@
 
 import React from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { useRouter } from 'next/navigation'
 import {
   Scale,
   StaggerItem,
 } from '@/components/ui/motion'
 import { SignupForm } from '@/components/auth/SignupForm'
+import { UserRoles } from '@/types'
 
 const SignUpPage = () => {
   return (
@@ -25,8 +25,8 @@ const SignUpPage = () => {
             </StaggerItem>
           </CardHeader>
           <CardContent className="p-8">
-            <SignupForm defaultRole="customer" />
-            
+            <SignupForm defaultRole={UserRoles.CUSTOMER} />
+
             <StaggerItem className="text-center text-sm mt-8">
               <span className="text-slate-500">Already have an account? </span>
               <a href="/auth/login" className="text-blue-600 hover:underline font-bold">Sign In</a>

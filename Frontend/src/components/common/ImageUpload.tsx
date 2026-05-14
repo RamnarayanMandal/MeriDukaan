@@ -14,8 +14,8 @@ export interface UploadedImage {
 }
 
 interface ImageUploadProps {
-  value: string | string[];
-  onChange: (value: string | string[]) => void;
+  value: string | string[] | undefined;
+  onChange: (value: string | string[] | undefined) => void;
   onUploadComplete?: (data: UploadedImage | UploadedImage[]) => void;
   label?: string;
   description?: string;

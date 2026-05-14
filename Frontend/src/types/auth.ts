@@ -33,7 +33,8 @@ export interface UpdateProfileData {
   firstName?: string
   lastName?: string
   phoneNumber?: string
-  gender?: 'MALE' | 'FEMALE' | 'OTHER'
+  gender?: Gender
+  bikeModel?: string[]
 }
 
 export interface OTPVerificationData {
@@ -67,8 +68,8 @@ export interface UserData {
   lastName: string
   email: string
   phoneNumber?: string
-  role: 'customer' | 'staff' | 'admin'
-  gender?: 'male' | 'female' | 'other'
+  role: UserRoles
+  gender?: Gender
   status?: 'active' | 'inactive' | 'suspended'
   isEmailVerified?: boolean
   profilePicture?: string
@@ -111,7 +112,7 @@ export enum UserRoles {
   ADMIN = "admin",
 }
 export enum Gender {
-  MALE = "MALE",
-  FEMALE = "FEMALE",
-  OTHER = "OTHER",
+  MALE = "male",
+  FEMALE = "female",
+  OTHER = "other",
 }

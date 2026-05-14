@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import axiosClient from '@/lib/axiosClient';
+import { UpdateProfileData } from '@/types';
 
 
 export interface CustomerUser {
@@ -98,7 +99,7 @@ export const useCustomerProfile = () => {
 export const useUpdateCustomerProfile = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: Partial<CustomerUser & { bikeModel: string }>) => {
+    mutationFn: async (data: UpdateProfileData) => {
       const res = await axiosClient.patch('/customer-auth/me', data);
       return res.data.data.customer;
     },

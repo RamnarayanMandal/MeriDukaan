@@ -14,6 +14,7 @@ import { showSuccess, showError } from '@/lib/sweetAlert'
 import { useSignup, useFirebaseAuth } from '@/hooks/useAuth'
 import { useFirebaseAuth as useFirebaseAuthHook } from '@/hooks/useFirebaseAuth'
 import { useRouter } from 'next/navigation'
+import { UserRoles, Gender } from '@/types'
 import { motion } from 'framer-motion'
 import {
   StaggerContainer,
@@ -35,7 +36,7 @@ const signupSchema = z.object({
   password: z.string().min(8, 'Password must be at least 8 characters'),
   confirmPassword: z.string().min(1, 'Please confirm your password'),
   phoneNumber: z.string().regex(/^[6-9]\d{9}$/, 'Phone number must be 10 digits starting with 6-9'),
-  gender: z.enum(['male', 'female', 'other']),
+  gender: z.nativeEnum(Gender),
   agreeToTerms: z.boolean().refine((val) => val === true, {
     message: 'You must agree to the terms and conditions'
   })
@@ -48,10 +49,10 @@ type SignupValues = z.infer<typeof signupSchema>
 
 interface SignupFormProps {
   onSuccess?: (user: any, token: string) => void;
-  defaultRole?: 'admin' | 'customer' | 'staff';
+  defaultRole?: UserRoles;
 }
 
-export function SignupForm({ onSuccess, defaultRole = 'customer' }: SignupFormProps) {
+export function SignupForm({ onSuccess, defaultRole = UserRoles.CUSTOMER }: SignupFormProps) {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const router = useRouter();
@@ -69,7 +70,7 @@ export function SignupForm({ onSuccess, defaultRole = 'customer' }: SignupFormPr
       password: '',
       confirmPassword: '',
       phoneNumber: '',
-      gender: 'male',
+      gender: Gender.MALE,
       agreeToTerms: false
     }
   })
@@ -80,7 +81,7 @@ export function SignupForm({ onSuccess, defaultRole = 'customer' }: SignupFormPr
   const onSubmit = (values: SignupValues) => {
     const { confirmPassword, ...userData } = values
     const signupData = { ...userData, confirmPassword, role: defaultRole }
-    signupMutation.mutate(signupData)
+    signupMutation.mutate(signupData as any)
   }
 
   React.useEffect(() => {
@@ -103,7 +104,7 @@ export function SignupForm({ onSuccess, defaultRole = 'customer' }: SignupFormPr
     if (firebaseAuthMutation.isSuccess) {
       const responseData = firebaseAuthMutation.data?.data || firebaseAuthMutation.data
       const { token, user } = responseData || {}
-      
+
       if (token && user) {
         showSuccess('Login Successful', `Welcome, ${user.firstName}!`)
         if (onSuccess) {
@@ -212,9 +213,9 @@ export function SignupForm({ onSuccess, defaultRole = 'customer' }: SignupFormPr
                   <SelectValue placeholder="Select gender" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="male">Male</SelectItem>
-                  <SelectItem value="female">Female</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
+                  <SelectItem value={Gender.MALE}>Male</SelectItem>
+                  <SelectItem value={Gender.FEMALE}>Female</SelectItem>
+                  <SelectItem value={Gender.OTHER}>Other</SelectItem>
                 </SelectContent>
               </Select>
             )}

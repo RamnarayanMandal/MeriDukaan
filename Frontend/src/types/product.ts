@@ -60,6 +60,8 @@ export interface CreateProductData {
   sourceType?: 'local' | 'external';
   isDraftProduct?: boolean;
   gstRate?: number;
+  images?: ProductImage[];
+  thumbnailImage?: ProductImage;
 }
 
 export interface UpdateProductData {

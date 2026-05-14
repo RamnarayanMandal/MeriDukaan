@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import QueryProvider from "@/components/providers/QueryProvider";
-
-
-
+import { shopSettingsService } from "@/service/shopSettingsService";
+import { ShopSettingsProvider } from "@/context/ShopSettingsContext";
+import { AuthProvider } from "@/context/AuthContext";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -17,41 +17,44 @@ const geistMono = localFont({
   weight: "100 900",
 });
 
-import { shopSettingsService } from "@/service/shopSettingsService";
-
 export async function generateMetadata(): Promise<Metadata> {
-  const settings = await shopSettingsService.getSettings("default");
-  
-  return {
-    title: {
-      template: `%s | ${settings.shopName}`,
-      default: settings.seoTitle || `${settings.shopName} | Best Bike Service`,
-    },
-    description: settings.seoDescription || "Expert two-wheeler repair and servicing.",
-    keywords: settings.seoKeywords ? settings.seoKeywords.split(",").map(k => k.trim()) : [],
-    authors: [{ name: settings.shopName }],
-    creator: settings.shopName,
-    icons: {
-      icon: settings.favicon || "/favicon.ico",
-    },
-    openGraph: {
-      type: "website",
-      locale: "en_IN",
-      title: settings.seoTitle || settings.shopName,
-      description: settings.seoDescription,
-      siteName: settings.shopName,
-      images: settings.logo ? [settings.logo] : [],
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: settings.seoTitle || settings.shopName,
-      description: settings.seoDescription,
-    },
-  };
+  try {
+    const settings = await shopSettingsService.getSettings("default");
+    
+    return {
+      title: {
+        template: `%s | ${settings.shopName}`,
+        default: settings.seoTitle || `${settings.shopName} | Best Bike Service`,
+      },
+      description: settings.seoDescription || "Expert two-wheeler repair and servicing.",
+      keywords: settings.seoKeywords ? settings.seoKeywords.split(",").map(k => k.trim()) : [],
+      authors: [{ name: settings.shopName }],
+      creator: settings.shopName,
+      icons: {
+        icon: settings.favicon || "/favicon.ico",
+      },
+      openGraph: {
+        type: "website",
+        locale: "en_IN",
+        title: settings.seoTitle || settings.shopName,
+        description: settings.seoDescription,
+        siteName: settings.shopName,
+        images: settings.logo ? [settings.logo] : [],
+      },
+      twitter: {
+        card: "summary_large_image",
+        title: settings.seoTitle || settings.shopName,
+        description: settings.seoDescription,
+      },
+    };
+  } catch (error) {
+    console.error("Error fetching shop settings for metadata:", error);
+    return {
+      title: "Mukesh Auto Garage | Best Bike Service",
+      description: "Expert two-wheeler repair and servicing.",
+    };
+  }
 }
-
-import { ShopSettingsProvider } from "@/context/ShopSettingsContext";
-import { AuthProvider } from "@/context/AuthContext";
 
 export default function RootLayout({
   children,

@@ -117,7 +117,7 @@ export default function NewBillPage() {
               <div className="space-y-2"><Label>Tax (%)</Label><Input type="number" {...register("tax", { valueAsNumber: true })} /></div>
               <div className="space-y-2 pt-4 border-t">
                 <div className="flex justify-between"><span>Subtotal:</span><span className="font-semibold">₹{calculateSubtotal().toFixed(2)}</span></div>
-                {watchedTax > 0 && <div className="flex justify-between"><span>Tax ({watchedTax}%):</span><span className="font-semibold">₹{calculateTax().toFixed(2)}</span></div>}
+                {(watchedTax || 0) > 0 && <div className="flex justify-between"><span>Tax ({watchedTax}%):</span><span className="font-semibold">₹{calculateTax().toFixed(2)}</span></div>}
                 <div className="flex justify-between text-lg font-bold pt-2 border-t"><span>Total:</span><span className="text-blue-600">₹{calculateTotal().toFixed(2)}</span></div>
               </div>
               <Button type="submit" className="w-full" disabled={createBill.isPending}><Save className="h-4 w-4 mr-2" />{createBill.isPending ? "Creating..." : "Create Bill"}</Button>

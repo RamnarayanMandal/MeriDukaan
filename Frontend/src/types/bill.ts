@@ -36,6 +36,7 @@ export interface CreateBillData {
   billDate?: Date | string;
   items: CreateBillItem[];
   tax?: number;
+  shopId?: string;
 }
 
 export interface UpdateBillData {
@@ -45,5 +46,6 @@ export interface UpdateBillData {
   billDate?: Date | string;
   items?: CreateBillItem[];
   tax?: number;
+  shopId?: string;
 }
 

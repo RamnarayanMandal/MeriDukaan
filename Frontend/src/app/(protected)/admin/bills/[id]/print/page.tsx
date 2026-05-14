@@ -5,6 +5,8 @@ import { useBill } from "@/hooks/useBills";
 import { useShop } from "@/hooks/useShop";
 import { Button } from "@/components/ui/button";
 import { Printer, ArrowLeft } from "lucide-react";
+import Image from "next/image";
+
 // Date formatting helper
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
@@ -122,14 +124,14 @@ export default function PrintBillPage() {
             </thead>
             <tbody>
               {bill.items.map((item: any, index: number) => {
-                const productName = typeof item.product === "string" 
-                  ? "Product" 
+                const productName = typeof item.product === "string"
+                  ? "Product"
                   : item.product?.name || "Product";
                 const unit = typeof item.product === "string"
                   ? ""
                   : item.product?.unit || "";
                 const amount = item.quantity * item.rate;
-                
+
                 return (
                   <tr key={item._id || index} className="even:bg-gray-50">
                     <td className="py-2 px-4 border border-gray-200">{index + 1}</td>

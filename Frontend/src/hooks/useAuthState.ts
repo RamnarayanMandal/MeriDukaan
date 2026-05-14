@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { getToken, getUser, isAuthenticated, clearAuthData } from '@/lib/auth';
-import { UserData } from '@/types';
+import { UserData, UserRoles } from '@/types';
 
 interface AuthState {
   isAuthenticated: boolean;
@@ -76,7 +76,7 @@ export const useAuthState = () => {
 };
 
 // Hook for checking specific roles
-export function useRole(requiredRole: 'student' | 'teacher' | 'admin') {
+export function useRole(requiredRole: UserRoles) {
   const { user, isAuthenticated } = useAuthState()
   
   return {
@@ -87,11 +87,11 @@ export function useRole(requiredRole: 'student' | 'teacher' | 'admin') {
 }
 
 // Hook for checking multiple roles
-export function useRoles(requiredRoles: ('student' | 'teacher' | 'admin')[]) {
+export function useRoles(requiredRoles: UserRoles[]) {
   const { user, isAuthenticated } = useAuthState()
   
   return {
-    hasAnyRole: user?.role ? requiredRoles.includes(user.role) : false,
+    hasAnyRole: user?.role ? requiredRoles.includes(user.role as any) : false,
     hasAllRoles: user?.role ? requiredRoles.every(role => user.role === role) : false,
     isAuthenticated,
     user
@@ -100,23 +100,34 @@ export function useRoles(requiredRoles: ('student' | 'teacher' | 'admin')[]) {
 
 // Hook for admin access
 export function useAdmin() {
-  return useRole('admin')
+  return useRole(UserRoles.ADMIN)
 }
 
-// Hook for teacher access
-export function useTeacher() {
+// Hook for mechanic access
+export function useMechanic() {
   const { user, isAuthenticated } = useAuthState()
   
   return {
-    hasRole: user?.role === 'teacher' || user?.role === 'admin',
+    hasRole: user?.role === UserRoles.MECHANIC || user?.role === UserRoles.ADMIN,
     isAuthenticated,
     user
   }
 }
 
-// Hook for student access
-export function useStudent() {
-  return useRole('student')
+// Hook for staff access
+export function useStaff() {
+  const { user, isAuthenticated } = useAuthState()
+  
+  return {
+    hasRole: user?.role === UserRoles.STAFF || user?.role === UserRoles.ADMIN,
+    isAuthenticated,
+    user
+  }
+}
+
+// Hook for customer access
+export function useCustomer() {
+  return useRole(UserRoles.CUSTOMER)
 }
 
 // Hook for checking if user can access a specific route
@@ -127,15 +138,15 @@ export function useRouteAccess(route: string) {
     if (!isAuthenticated) return false
 
     if (route.startsWith('/admin')) {
-      return user?.role === 'admin'
+      return user?.role === UserRoles.ADMIN
     }
 
-    if (route.startsWith('/teacher')) {
-      return user?.role === 'teacher' || user?.role === 'admin'
+    if (route.startsWith('/staff')) {
+      return user?.role === UserRoles.STAFF || user?.role === UserRoles.ADMIN
     }
 
-    if (route.startsWith('/student')) {
-      return user?.role === 'student'
+    if (route.startsWith('/customer')) {
+      return user?.role === UserRoles.CUSTOMER
     }
 
     return true

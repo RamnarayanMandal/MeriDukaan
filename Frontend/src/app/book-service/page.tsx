@@ -18,6 +18,8 @@ export const metadata: Metadata = {
   }
 };
 
+import { Suspense } from 'react';
+
 export default function BookServicePage() {
   return (
     <div className="min-h-screen bg-gray-50 py-12">
@@ -31,7 +33,9 @@ export default function BookServicePage() {
           </p>
         </div>
         
-        <BookServiceForm />
+        <Suspense fallback={<div className="text-center py-12">Loading form...</div>}>
+          <BookServiceForm />
+        </Suspense>
       </div>
 
       {/* Structured Data for LocalBusiness */}
