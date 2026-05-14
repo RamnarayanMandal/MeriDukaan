@@ -97,8 +97,9 @@ export function SidebarMobile({ children, trigger }: SidebarMobileProps) {
       </SheetTrigger>
       <SheetContent side="left" className="w-72 p-0">
         <SidebarHeader>
-          <div className="flex items-center space-x-2 py-4">
+          <div className="flex content-center items-center gap-4 space-x-2 py-4">
             <Image src="/logo.png" alt="Logo" width={32} height={32} />
+            <p className='text-blue-600 font-semibold'>Mukesh Auto Garage</p>
           </div>
         </SidebarHeader>
         <SidebarContent>
