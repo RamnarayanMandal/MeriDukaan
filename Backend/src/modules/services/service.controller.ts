@@ -12,7 +12,7 @@ export const ServiceController = {
   }),
 
   getAll: asyncHandler(async (req: Request, res: Response) => {
-    const { services, total, page, limit } = await serviceModuleService.getAllServices(req.query);
+    const { services, total, page, limit } = await serviceModuleService.getAllServices(req.query) as any;
     ResponseHandler.paginated(res, 'Services retrieved successfully', services, page, limit, total);
   }),
 

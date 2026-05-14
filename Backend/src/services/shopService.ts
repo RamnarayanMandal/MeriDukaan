@@ -113,10 +113,10 @@ export class ShopService {
     return shop;
   }
 
-  /* ================= UPDATE LOGO (CLOUDINARY) ================= */
+  /* ================= UPDATE LOGO (DRIVE/CLOUDINARY) ================= */
   static async updateLogoById(
     id: string,
-    file: Express.Multer.File,
+    logoData: { url: string },
     ownerId: string
   ): Promise<IShop> {
 
@@ -125,9 +125,22 @@ export class ShopService {
       throw new Error('Shop not found or permission denied');
     }
 
-    const upload = await uploadOnCloudinary(file.path);
+    shop.logo = logoData.url;
+    await shop.save();
+    return shop;
+  }
 
-    shop.logo = upload.secureUrl;
+  /* ================= BACKWARD COMPATIBILITY METHODS ================= */
+  static async updateShop(data: Partial<IShop>): Promise<IShop> {
+    const shop = await this.getShop();
+    Object.assign(shop, data);
+    await shop.save();
+    return shop;
+  }
+
+  static async updateLogo(logoData: { url: string }): Promise<IShop> {
+    const shop = await this.getShop();
+    shop.logo = logoData.url;
     await shop.save();
     return shop;
   }

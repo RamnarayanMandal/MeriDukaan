@@ -63,7 +63,7 @@ const startServer = async () => {
 
     try {
       await redisClient.connect();
-    } catch (err) {
+    } catch (err: any) {
       console.warn('⚠️ Redis failed to connect. Running without cache.', err.message);
     }
 

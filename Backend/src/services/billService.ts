@@ -78,7 +78,7 @@ export class BillService {
           item.productId,
           -item.quantity,
           'SALE',
-          bill._id.toString()
+          (bill as any)._id.toString()
         );
       }
 
@@ -328,7 +328,7 @@ export class BillService {
       subtotal += amount;
       
       billItems.push({
-        product: product._id,
+        product: (product as any)._id,
         quantity: item.quantity,
         rate: item.rate,
         amount,

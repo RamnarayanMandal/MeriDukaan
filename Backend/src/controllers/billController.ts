@@ -14,9 +14,10 @@ export class BillController {
   static async createBill(req: Request, res: Response) {
     try {
       const validatedData = createBillSchema.parse(req.body);
-      // Ensure billDate is set (default to today if not provided)
+      // Ensure billDate and shopId are set
       const billData = {
         ...validatedData,
+        shopId: validatedData.shopId || (req as any).user?.shopId,
         billDate: validatedData.billDate || new Date(),
       };
       const bill = await BillService.createBill(billData);

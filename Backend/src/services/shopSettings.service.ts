@@ -19,7 +19,7 @@ export class ShopSettingsService {
     
     if (shopId === 'default' || !mongoose.Types.ObjectId.isValid(shopId)) {
       const { Shop } = await import('../models/Shop');
-      const firstShop = await Shop.findOne().sort({ createdAt: 1 });
+      const firstShop = await Shop.findOne().sort({ createdAt: 1 }) as any;
       if (firstShop) {
         targetShopId = firstShop._id.toString();
       } else {
@@ -52,7 +52,7 @@ export class ShopSettingsService {
 
     if (shopId === 'default' || !mongoose.Types.ObjectId.isValid(shopId)) {
       const { Shop } = await import('../models/Shop');
-      const firstShop = await Shop.findOne().sort({ createdAt: 1 });
+      const firstShop = await Shop.findOne().sort({ createdAt: 1 }) as any;
       if (firstShop) {
         targetShopId = firstShop._id.toString();
       } else {

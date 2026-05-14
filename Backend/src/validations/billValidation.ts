@@ -13,6 +13,7 @@ export const createBillSchema = z.object({
   billDate: z.coerce.date().optional(),
   items: z.array(billItemSchema).min(1, 'At least one item is required'),
   tax: z.number().min(0, 'Tax must be 0 or greater').optional(),
+  shopId: z.string().optional(),
 });
 
 export const updateBillSchema = createBillSchema.partial().extend({
