@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useProducts, useDeleteProduct } from "@/hooks/useProducts";
+import { useProducts, useInfiniteProducts, useDeleteProduct } from "@/hooks/useProducts";
 import { useAllShops } from "@/hooks/useShop";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,16 +42,26 @@ export default function ProductsPage() {
     setPage(1);
   }, [search, category, selectedShopId, startDate, endDate]);
 
-  const { data, isLoading } = useProducts({
+  const { 
+    data: infiniteData, 
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage
+  } = useInfiniteProducts({
     shopId: selectedShopId !== "all" ? selectedShopId : undefined,
     search: search || undefined,
-    category: category !== "all" ? category : undefined,
+    category: category !== "all" ? (category as any) : undefined,
     startDate: startDate || undefined,
     endDate: endDate || undefined,
-    page,
     limit,
   });
+
   const deleteProduct = useDeleteProduct();
+
+  // Flatten the infinite pages into a single array of items
+  const allProducts = infiniteData?.pages.flatMap((page: any) => page.items) || [];
+  const totalCount = (infiniteData?.pages[0] as any)?.meta?.total || (infiniteData?.pages[0] as any)?.totalCount || 0;
 
   const clearFilters = () => {
     setSearch("");
@@ -59,7 +69,6 @@ export default function ProductsPage() {
     setSelectedShopId("all");
     setStartDate("");
     setEndDate("");
-    setPage(1);
   };
 
   const hasActiveFilters = search || category !== "all" || selectedShopId !== "all" || startDate || endDate;
@@ -186,9 +195,9 @@ export default function ProductsPage() {
         <div className="flex justify-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
         </div>
-      ) : data && data.items.length > 0 ? (
+      ) : allProducts.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {data.items.map((product) => (
+          {allProducts.map((product: Product) => (
             <Card key={product._id}>
               <CardHeader>
                 <div className="flex justify-between items-start gap-3">
@@ -197,7 +206,7 @@ export default function ProductsPage() {
                       <button
                         type="button"
                         className="h-12 w-12 rounded-md overflow-hidden border bg-gray-50"
-                        onClick={() => setGalleryProduct(product as Product)}
+                        onClick={() => setGalleryProduct(product)}
                       >
                         <img
                           src={product.thumbnailImage.url}
@@ -296,30 +305,14 @@ export default function ProductsPage() {
         </Card>
       )}
 
-      {data && data.totalCount > data.limit && (
-        <div className="flex justify-end items-center gap-2 mt-6">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={page <= 1}
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
+      {hasNextPage && (
+        <div className="flex justify-center mt-6">
+          <Button 
+            variant="outline" 
+            onClick={() => fetchNextPage()} 
+            disabled={isFetchingNextPage}
           >
-            Previous
-          </Button>
-          <span className="text-sm text-gray-600">
-            Page {data.page} of {Math.ceil(data.totalCount / data.limit)}
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={data.page * data.limit >= data.totalCount}
-            onClick={() => {
-              if (data.page * data.limit < data.totalCount) {
-                setPage((p) => p + 1);
-              }
-            }}
-          >
-            Next
+            {isFetchingNextPage ? "Loading more..." : "Load More Products"}
           </Button>
         </div>
       )}

@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import { USER_ROLE, USER_STATUS, USER_GENDER } from '../types/enum';
 import { IUser } from '../types/user';
+import bcrypt from 'bcryptjs';
 
 const userSchema = new mongoose.Schema({
 
@@ -83,6 +84,14 @@ const userSchema = new mongoose.Schema({
   resetPasswordExpires: Date,
   loginAttempts: { type: Number, default: 0 },
   lockUntil: Date,
+  refreshToken: String,
+
+  // Customer specific fields (can be used for Admin/Staff too if needed)
+  bikeModel: [{ type: String }],
+  totalVisits: { type: Number, default: 0 },
+  lastServiceDate: { type: Date },
+  pendingPayments: { type: Number, default: 0 },
+  notes: { type: String },
 
 },
 {
@@ -95,5 +104,23 @@ userSchema.index({ email: 1 });
 userSchema.index({ googleId: 1 });
 userSchema.index({ firebaseUid: 1 });
 userSchema.index({ phoneNumber: 1 });
+
+// Pre-save hook to hash password
+userSchema.pre('save', async function(next) {
+  if (!this.isModified('password')) return next();
+  try {
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password!, salt);
+    next();
+  } catch (error: any) {
+    next(error);
+  }
+});
+
+// Method to compare password
+userSchema.methods.comparePassword = async function(candidatePassword: string): Promise<boolean> {
+  if (!this.password) return false;
+  return bcrypt.compare(candidatePassword, this.password);
+};
 
 export const User = mongoose.model<IUser>('User', userSchema);

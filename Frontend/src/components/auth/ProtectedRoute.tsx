@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { isAuthenticated, getUserRole } from '@/lib/auth'
+import { useAuthContext } from '@/context/AuthContext'
 
 interface ProtectedRouteProps {
   children: React.ReactNode
@@ -15,45 +15,43 @@ export default function ProtectedRoute({
   allowedRoles = [], 
   redirectTo = '/auth/login' 
 }: ProtectedRouteProps) {
-  const [isLoading, setIsLoading] = useState(true)
-  const [hasAccess, setHasAccess] = useState(false)
+  const { user, isLoading: authLoading } = useAuthContext()
   const router = useRouter()
+  const [hasAccess, setHasAccess] = useState(false)
 
   useEffect(() => {
-    const checkAuth = () => {
-      // Check if user is authenticated
-      if (!isAuthenticated()) {
-        router.push(redirectTo)
-        return
-      }
+    if (authLoading) return
 
-      // If no specific roles are required, allow access
-      if (allowedRoles.length === 0) {
-        setHasAccess(true)
-        setIsLoading(false)
-        return
-      }
-
-      // Check if user has required role
-      const userRole = getUserRole()
-      if (!userRole || !allowedRoles.includes(userRole.toLowerCase())) {
-        // Only admin role exists in shop management system
-        if (userRole?.toLowerCase() === 'admin') {
-          router.push('/admin')
-        } else {
-          router.push(redirectTo)
-        }
-        return
-      }
-
-      setHasAccess(true)
-      setIsLoading(false)
+    // Check if user is authenticated
+    if (!user) {
+      router.push(redirectTo)
+      return
     }
 
-    checkAuth()
-  }, [router, allowedRoles, redirectTo])
+    // If no specific roles are required, allow access
+    if (allowedRoles.length === 0) {
+      setHasAccess(true)
+      return
+    }
 
-  if (isLoading) {
+    // Check if user has required role
+    const userRole = user.role?.toLowerCase()
+    if (!userRole || !allowedRoles.includes(userRole)) {
+      // Only admin role exists in shop management system
+      if (userRole === 'admin') {
+        router.push('/admin')
+      } else if (userRole === 'customer') {
+        router.push('/customer/dashboard')
+      } else {
+        router.push(redirectTo)
+      }
+      return
+    }
+
+    setHasAccess(true)
+  }, [user, authLoading, router, allowedRoles, redirectTo])
+
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">

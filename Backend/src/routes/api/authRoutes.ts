@@ -31,6 +31,7 @@ router.use(AuthMiddleware.verifyToken);
 
 // User profile routes
 router.get('/profile', authController.getUserProfile.bind(authController));
+router.get('/customers', AuthMiddleware.requireAdmin, authController.getCustomers.bind(authController));
 router.put('/profile', authController.updateProfile.bind(authController));
 
 // Password change (requires authentication)

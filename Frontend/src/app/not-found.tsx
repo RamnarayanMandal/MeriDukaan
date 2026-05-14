@@ -31,7 +31,7 @@ export default function NotFound() {
               Don&apos;t worry, we&apos;ll help you get back on track!
             </p>
           </div>
-          
+
           <div className="flex flex-col space-y-3">
             <Button
               onClick={() => router.push('/')}
@@ -40,7 +40,7 @@ export default function NotFound() {
               <Home className="h-4 w-4 mr-2" />
               Go to Homepage
             </Button>
-            
+
             <Button
               onClick={() => router.back()}
               variant="outline"
@@ -49,17 +49,17 @@ export default function NotFound() {
               <ArrowLeft className="h-4 w-4 mr-2" />
               Go Back
             </Button>
-            
+
             <div className="flex space-x-2">
               <Button
-                onClick={() => router.push('/hostels')}
+                onClick={() => router.push('/services')}
                 variant="ghost"
                 className="flex-1 text-gray-600 hover:text-gray-900 hover:bg-gray-100"
               >
                 <Search className="h-4 w-4 mr-2" />
-                Browse Hostels
+                Services
               </Button>
-              
+
               <Button
                 onClick={() => window.location.reload()}
                 variant="ghost"
@@ -75,11 +75,11 @@ export default function NotFound() {
             <div className="text-center text-xs text-gray-400">
               <p>Need help? Contact our support team</p>
               <p className="mt-1">
-                <a 
-                  href="mailto:support@hostelmanagement.com" 
+                <a
+                  href="mailto:ramnarayan847230@gmail.com"
                   className="text-blue-600 hover:text-blue-700 underline"
                 >
-                  support@hostelmanagement.com
+                  ramnarayan847230@gmail.com
                 </a>
               </p>
             </div>

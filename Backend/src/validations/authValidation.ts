@@ -50,18 +50,19 @@ export const signupSchema = z.object({
   city: z.string().optional(),
   country: z.string().optional(),
   
-  role: z.nativeEnum(USER_ROLE).optional().default(USER_ROLE.STUDENT),
+  role: z.nativeEnum(USER_ROLE).optional().default(USER_ROLE.CUSTOMER),
+  // Customer-specific optional fields
+  bikeModel: z.string().optional(),
   
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
 });
 
-// Login validation schema
+// Login validation schema — accepts email OR phone number + password
 export const loginSchema = z.object({
-  email: z.string()
-    .email('Invalid email format')
-    .toLowerCase(),
+  // 'identifier' field accepts either an email address or a phone number
+  identifier: z.string().min(1, 'Email or phone number is required'),
   
   password: z.string()
     .min(1, 'Password is required'),
@@ -100,8 +101,7 @@ export const resetPasswordSchema = z.object({
   token: z.string().min(1, 'Reset token is required'),
   
   password: z.string()
-    .min(8, 'Password must be at least 8 characters')
-    .regex(passwordPattern, 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character'),
+    .min(8, 'Password must be at least 8 characters'),
   
   confirmPassword: z.string(),
   
@@ -115,8 +115,7 @@ export const changePasswordSchema = z.object({
   currentPassword: z.string().min(1, 'Current password is required'),
   
   newPassword: z.string()
-    .min(8, 'Password must be at least 8 characters')
-    .regex(passwordPattern, 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character'),
+    .min(8, 'Password must be at least 8 characters'),
   
   confirmNewPassword: z.string(),
   

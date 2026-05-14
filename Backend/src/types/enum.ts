@@ -1,5 +1,7 @@
 export enum USER_ROLE {
     ADMIN = 'admin',
+    STAFF = 'staff',
+    CUSTOMER = 'customer',
 }
 
 export enum USER_STATUS {
@@ -61,4 +63,11 @@ export const ROLE_PERMISSIONS: Record<USER_ROLE, PERMISSION[]> = {
         PERMISSION.MANAGE_BILLS, PERMISSION.VIEW_BILLS,
         PERMISSION.MANAGE_ABOUT, PERMISSION.VIEW_ABOUT,
     ],
+    [USER_ROLE.STAFF]: [
+        PERMISSION.VIEW_SHOP,
+        PERMISSION.MANAGE_PRODUCTS, PERMISSION.VIEW_PRODUCTS,
+        PERMISSION.MANAGE_BILLS, PERMISSION.VIEW_BILLS,
+        PERMISSION.VIEW_ABOUT,
+    ],
+    [USER_ROLE.CUSTOMER]: [], // Customers have no admin permissions
 };

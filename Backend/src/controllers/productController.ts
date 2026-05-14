@@ -14,7 +14,17 @@ export class ProductController {
   /* ================= CREATE PRODUCT ================= */
   static async createProduct(req: Request, res: Response) {
     try {
-      const validatedData = createProductSchema.parse(req.body);
+      const userId = (req as any).user?.userId;
+      const { Shop } = await import('../models/Shop');
+      const userShop = await Shop.findOne({ owner: userId });
+
+      const shopId = req.body.shopId || userShop?._id;
+      
+      if (!shopId) {
+        return ResponseHandler.error(res, 'Shop ID is required. Please ensure you have a shop created.', 400);
+      }
+
+      const validatedData = createProductSchema.parse({ ...req.body, shopId: shopId.toString() });
       const product = await InventoryService.createProduct(validatedData);
       return ResponseHandler.success(res, 'Product created successfully', product, 201);
     } catch (error: any) {
@@ -49,6 +59,35 @@ export class ProductController {
 
       if (!product) {
         return ResponseHandler.error(res, 'Product not found', 404);
+      }
+
+      return ResponseHandler.success(res, 'Product retrieved successfully', product);
+    } catch (error: any) {
+      return ResponseHandler.error(res, error.message, 500);
+    }
+  }
+
+  /* ================= GET PRODUCT BY BARCODE ================= */
+  static async getProductByBarcode(req: Request, res: Response) {
+    try {
+      const { code } = req.params;
+      let { shopId } = req.query;
+      
+      if (!shopId) {
+        const userId = (req as any).user?.userId;
+        const { Shop } = await import('../models/Shop');
+        const userShop = await Shop.findOne({ owner: userId });
+        shopId = userShop?._id?.toString();
+      }
+
+      if (!shopId) {
+        return ResponseHandler.error(res, 'shopId is required', 400);
+      }
+
+      const product = await InventoryService.getProductByBarcode(code, shopId as string);
+
+      if (!product) {
+        return ResponseHandler.error(res, 'Product not found locally or in external database', 404);
       }
 
       return ResponseHandler.success(res, 'Product retrieved successfully', product);

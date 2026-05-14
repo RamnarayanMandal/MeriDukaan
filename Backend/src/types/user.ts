@@ -30,6 +30,14 @@ export interface IUser extends Document {
   resetPasswordExpires?: Date;
   loginAttempts: number;
   lockUntil?: Date;
+  refreshToken?: string;
+  // Customer specific
+  bikeModel: string[];
+  totalVisits: number;
+  lastServiceDate?: Date;
+  pendingPayments: number;
+  notes?: string;
   createdAt: Date;
   updatedAt: Date;
+  comparePassword(password: string): Promise<boolean>;
 }

@@ -1,78 +1,104 @@
 "use client"
 
+import { useDashboardAnalytics } from '@/hooks/useAnalytics'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { 
-  Package, 
+  Users, 
   Store, 
   Receipt, 
-  TrendingUp,
-  TrendingDown,
-  DollarSign
+  Calendar,
+  AlertTriangle,
+  IndianRupee,
+  Activity,
+  Plus
 } from 'lucide-react'
 import { 
   StaggerContainer, 
   StaggerItem, 
   FadeIn, 
-  SlideUp, 
   HoverLift
 } from '@/components/ui/motion'
-import { useProducts } from '@/hooks/useProducts'
-import { useBills } from '@/hooks/useBills'
 import { useRouter } from 'next/navigation'
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+} from 'recharts'
+import { Button } from '@/components/ui/button'
 
 export default function AdminDashboard() {
   const router = useRouter()
-  const { data: products } = useProducts()
-  const { data: bills } = useBills()
+  const { data: analytics, isLoading } = useDashboardAnalytics()
 
-  const totalProducts = products?.items?.length || 0
-  const totalBills = bills?.items?.length || 0
-  const totalRevenue = bills?.items?.reduce((sum: number, bill) => sum + bill.grandTotal, 0) || 0
-  const lowStockProducts = products?.items?.filter((p) => p.stockQty < 10).length || 0
+  if (isLoading) {
+    return <div className="flex h-[50vh] items-center justify-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+    </div>
+  }
+
+  const m = analytics?.metrics || {}
+  const lowStock = analytics?.lowStockProducts || []
+  const chartData = analytics?.revenueChart || []
+
+  // Reverse chart data so oldest is on the left
+  const chronologicalChartData = [...chartData].reverse()
 
   const stats = [
     {
-      title: "Total Products",
-      value: totalProducts.toString(),
-      change: "+5",
-      trend: "up" as const,
-      icon: Package,
-      description: "Products in inventory"
+      title: "Today's Revenue",
+      value: `₹${m.todayRevenue?.toLocaleString() || 0}`,
+      icon: IndianRupee,
+      description: "Total revenue for today",
+      color: "text-green-600",
+      bgColor: "bg-green-100"
     },
     {
-      title: "Total Bills",
-      value: totalBills.toString(),
-      change: "+12",
-      trend: "up" as const,
-      icon: Receipt,
-      description: "Bills generated"
+      title: "Monthly Revenue",
+      value: `₹${m.monthlyRevenue?.toLocaleString() || 0}`,
+      icon: Activity,
+      description: "Total revenue this month",
+      color: "text-blue-600",
+      bgColor: "bg-blue-100"
     },
     {
-      title: "Total Revenue",
-      value: `₹${(totalRevenue / 100000).toFixed(1)}L`,
-      change: "+15%",
-      trend: "up" as const,
-      icon: DollarSign,
-      description: "Total revenue"
+      title: "Pending Appointments",
+      value: m.pendingAppointments?.toString() || "0",
+      icon: Calendar,
+      description: "Bookings waiting confirmation",
+      color: "text-orange-600",
+      bgColor: "bg-orange-100"
     },
     {
-      title: "Low Stock",
-      value: lowStockProducts.toString(),
-      change: lowStockProducts > 0 ? "Alert" : "OK",
-      trend: lowStockProducts > 0 ? ("down" as const) : ("up" as const),
+      title: "Active Jobs",
+      value: m.activeAppointments?.toString() || "0",
       icon: Store,
-      description: "Products needing restock"
+      description: "Vehicles currently in-progress",
+      color: "text-purple-600",
+      bgColor: "bg-purple-100"
     }
   ]
 
   return (
     <div className="space-y-6">
-      <SlideUp>
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-          <p className="text-gray-600">Welcome back! Here&apos;s what&apos;s happening with your shop.</p>
+      <FadeIn>
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Garage Dashboard</h1>
+            <p className="text-gray-600 mt-1">Overview of your workshop performance</p>
+          </div>
+          <div className="flex gap-2">
+            <Button onClick={() => router.push('/admin/invoices/new')}>
+              <Plus className="h-4 w-4 mr-2" /> New Invoice
+            </Button>
+          </div>
         </div>
-      </SlideUp>
+      </FadeIn>
 
       {/* Stats Grid */}
       <StaggerContainer>
@@ -85,23 +111,12 @@ export default function AdminDashboard() {
                     <CardTitle className="text-sm font-medium text-gray-600">
                       {stat.title}
                     </CardTitle>
-                    <stat.icon className="h-4 w-4 text-gray-400" />
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${stat.bgColor}`}>
+                      <stat.icon className={`h-4 w-4 ${stat.color}`} />
+                    </div>
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold text-gray-900">{stat.value}</div>
-                    <div className="flex items-center space-x-2">
-                      {stat.trend === "up" ? (
-                        <TrendingUp className="h-4 w-4 text-green-600" />
-                      ) : (
-                        <TrendingDown className="h-4 w-4 text-red-600" />
-                      )}
-                      <span className={`text-sm ${
-                        stat.trend === "up" ? "text-green-600" : "text-red-600"
-                      }`}>
-                        {stat.change}
-                      </span>
-                      <span className="text-sm text-gray-500">from last month</span>
-                    </div>
                     <p className="text-xs text-gray-500 mt-1">{stat.description}</p>
                   </CardContent>
                 </Card>
@@ -111,96 +126,116 @@ export default function AdminDashboard() {
         </div>
       </StaggerContainer>
 
-      {/* Recent Activity */}
-      <StaggerContainer>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <StaggerItem>
-            <FadeIn>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Recent Bills</CardTitle>
-                  <CardDescription>Latest generated bills</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {bills?.items && bills.items.slice(0, 5).map((bill) => (
-                      <div key={bill._id} className="flex items-center space-x-4">
-                        <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                          <Receipt className="h-4 w-4 text-blue-600" />
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-sm font-medium">{bill.billNumber} - {bill.customerName}</p>
-                          <p className="text-xs text-gray-500">₹{bill.grandTotal.toFixed(2)}</p>
-                        </div>
-                      </div>
-                    ))}
-                    {(!bills?.items || bills.items.length === 0) && (
-                      <p className="text-sm text-gray-500">No bills yet</p>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            </FadeIn>
-          </StaggerItem>
-
-          <StaggerItem>
-            <FadeIn>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Quick Actions</CardTitle>
-                  <CardDescription>Common admin tasks</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <HoverLift>
-                      <button 
-                        onClick={() => router.push('/admin/products/new')}
-                        className="w-full text-left p-3 rounded-lg border hover:bg-gray-50 transition-colors"
-                      >
-                        <div className="flex items-center space-x-3">
-                          <Package className="h-5 w-5 text-blue-600" />
-                          <div>
-                            <p className="font-medium">Add New Product</p>
-                            <p className="text-sm text-gray-500">Add product to inventory</p>
-                          </div>
-                        </div>
-                      </button>
-                    </HoverLift>
-                    <HoverLift>
-                      <button 
-                        onClick={() => router.push('/admin/bills/new')}
-                        className="w-full text-left p-3 rounded-lg border hover:bg-gray-50 transition-colors"
-                      >
-                        <div className="flex items-center space-x-3">
-                          <Receipt className="h-5 w-5 text-green-600" />
-                          <div>
-                            <p className="font-medium">Create New Bill</p>
-                            <p className="text-sm text-gray-500">Generate invoice for customer</p>
-                          </div>
-                        </div>
-                      </button>
-                    </HoverLift>
-                    <HoverLift>
-                      <button 
-                        onClick={() => router.push('/admin/shop')}
-                        className="w-full text-left p-3 rounded-lg border hover:bg-gray-50 transition-colors"
-                      >
-                        <div className="flex items-center space-x-3">
-                          <Store className="h-5 w-5 text-purple-600" />
-                          <div>
-                            <p className="font-medium">Shop Settings</p>
-                            <p className="text-sm text-gray-500">Update shop details</p>
-                          </div>
-                        </div>
-                      </button>
-                    </HoverLift>
-                  </div>
-                </CardContent>
-              </Card>
-            </FadeIn>
-          </StaggerItem>
+      {/* Charts & Lists */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        {/* Revenue Chart */}
+        <div className="lg:col-span-2">
+          <FadeIn>
+            <Card className="h-full">
+              <CardHeader>
+                <CardTitle>Revenue (Last 7 Days)</CardTitle>
+                <CardDescription>Daily income breakdown</CardDescription>
+              </CardHeader>
+              <CardContent className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={chronologicalChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <XAxis dataKey="date" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                    <YAxis 
+                      stroke="#888888" 
+                      fontSize={12} 
+                      tickLine={false} 
+                      axisLine={false} 
+                      tickFormatter={(value) => `₹${value}`}
+                    />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                    <Tooltip 
+                      formatter={(value: any) => [`₹${value}`, "Revenue"]}
+                      contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                    />
+                    <Area 
+                      type="monotone" 
+                      dataKey="revenue" 
+                      stroke="#3b82f6" 
+                      strokeWidth={3}
+                      fillOpacity={1} 
+                      fill="url(#colorRevenue)" 
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </FadeIn>
         </div>
-      </StaggerContainer>
+
+        {/* Actionable Insights */}
+        <div className="space-y-6">
+          <FadeIn>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5 text-red-500" />
+                  Low Stock Alerts
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {lowStock.length > 0 ? (
+                    lowStock.map((product: any) => (
+                      <div key={product._id} className="flex justify-between items-center border-b pb-2 last:border-0 last:pb-0">
+                        <div>
+                          <p className="font-medium text-sm">{product.name}</p>
+                          <p className="text-xs text-gray-500">{product.productCode}</p>
+                        </div>
+                        <span className="bg-red-100 text-red-700 font-semibold px-2 py-1 rounded text-xs">
+                          {product.stockQty} left
+                        </span>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-gray-500 text-center py-4">All inventory looks good!</p>
+                  )}
+                  {lowStock.length > 0 && (
+                    <Button variant="link" className="w-full text-xs text-blue-600" onClick={() => router.push('/admin/products')}>
+                      View Inventory
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </FadeIn>
+
+          <FadeIn>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5 text-blue-500" />
+                  CRM Summary
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                  <div>
+                    <p className="text-sm font-medium">Total Customers</p>
+                    <p className="text-2xl font-bold">{m.totalCustomers}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">Monthly Jobs</p>
+                    <p className="text-2xl font-bold">{m.completedAppointmentsMonth}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </FadeIn>
+        </div>
+
+      </div>
     </div>
   )
 }

@@ -12,6 +12,11 @@ export enum ProductUnit {
   SQ_M = 'Sq m',
   BOX = 'Box',
   PIECE = 'Piece',
+  KG = 'Kg',
+  GRAM = 'Gram',
+  LITRE = 'Litre',
+  ML = 'Ml',
+  PACK = 'Pack',
 }
 
 export interface IProductImage {
@@ -22,8 +27,11 @@ export interface IProductImage {
 
 export interface IProduct extends mongoose.Document {
   name: string;
-  category: string; // Changed from ProductCategory enum to string to allow custom categories
+  category: string;
   productCode?: string;
+  sku?: string;
+  barcode: string;
+  brand?: string;
   price: number;
   stockQty: number;
   unit: ProductUnit;
@@ -31,6 +39,9 @@ export interface IProduct extends mongoose.Document {
   images?: IProductImage[];
   thumbnailImage?: IProductImage;
   shopId: mongoose.Types.ObjectId;
+  sourceType: 'local' | 'external';
+  isDraftProduct: boolean;
+  gstRate?: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -52,6 +63,21 @@ const productSchema = new mongoose.Schema<IProduct>(
       trim: true,
       uppercase: true,
     },
+    sku: {
+      type: String,
+      trim: true,
+      uppercase: true,
+    },
+    barcode: {
+      type: String,
+      required: true,
+      index: true,
+      trim: true,
+    },
+    brand: {
+      type: String,
+      trim: true,
+    },
     price: {
       type: Number,
       required: [true, 'Price is required'],
@@ -66,11 +92,24 @@ const productSchema = new mongoose.Schema<IProduct>(
       type: String,
       enum: Object.values(ProductUnit),
       required: [true, 'Unit is required'],
-      default: ProductUnit.SQ_FT,
+      default: ProductUnit.PIECE,
     },
     description: {
       type: String,
       trim: true,
+    },
+    sourceType: {
+      type: String,
+      enum: ['local', 'external'],
+      default: 'local',
+    },
+    isDraftProduct: {
+      type: Boolean,
+      default: false,
+    },
+    gstRate: {
+      type: Number,
+      default: 0,
     },
     images: [
       {
@@ -100,8 +139,10 @@ const productSchema = new mongoose.Schema<IProduct>(
 productSchema.index({ name: 1 });
 productSchema.index({ category: 1 });
 productSchema.index({ productCode: 1 });
+productSchema.index({ sku: 1 });
 productSchema.index({ shopId: 1, name: 1 });
 productSchema.index({ shopId: 1, category: 1 });
+productSchema.index({ shopId: 1, barcode: 1 });
 
 export const Product = mongoose.model<IProduct>('Product', productSchema);
 

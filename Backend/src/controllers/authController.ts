@@ -24,29 +24,28 @@ export class AuthController {
 
   // Signup
   signup = asyncHandler(async (req: Request, res: Response) => {
-    // Validate request body
     const validatedData = signupSchema.parse(req.body);
-
-    // Call service
     const result = await this.authService.signup(validatedData);
 
-    ResponseHandler.created(res, result.message, {
-      userId: result.userId,
-    });
+    // OTP verification is skipped; return token and user data immediately
+    ResponseHandler.created(res, result.message, result.data);
   });
 
   // Login
   login = asyncHandler(async (req: Request, res: Response) => {
-    // Validate request body
     const validatedData = loginSchema.parse(req.body);
-
-    // Call service
     const result = await this.authService.login(validatedData);
+    
+    if (result.success && result.data?.token) {
+      res.cookie('token', result.data.token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      });
+    }
 
-    ResponseHandler.success(res, result.message, {
-      token: result.token,
-      user: result.user,
-    });
+    ResponseHandler.success(res, result.message, result.data);
   });
 
   // Email OTP verification
@@ -266,14 +265,8 @@ export class AuthController {
 
       // Call service
       const result = await this.authService.updateProfile(userId, validatedData);
-
-      res.status(200).json({
-        success: true,
-        message: result.message,
-        data: {
-          user: result.user,
-        },
-      });
+ 
+      ResponseHandler.success(res, result.message, result.data);
     } catch (error: any) {
       if (error.name === 'ZodError') {
         return res.status(400).json({
@@ -304,13 +297,8 @@ export class AuthController {
 
       // Call service
       const result = await this.authService.getUserProfile(userId);
-
-      res.status(200).json({
-        success: true,
-        data: {
-          user: result.user,
-        },
-      });
+ 
+      ResponseHandler.success(res, 'User profile retrieved successfully', result.data);
     } catch (error: any) {
       res.status(400).json({
         success: false,
@@ -327,15 +315,8 @@ export class AuthController {
 
       // Call service
       const result = await this.authService.googleLogin(validatedData.code);
-
-      res.status(200).json({
-        success: true,
-        message: result.message,
-        data: {
-          token: result.token,
-          user: result.user,
-        },
-      });
+ 
+      ResponseHandler.success(res, result.message, result.data);
     } catch (error: any) {
       if (error.name === 'ZodError') {
         return res.status(400).json({
@@ -372,6 +353,12 @@ export class AuthController {
       });
     }
   }
+
+  // Get all customers (Admin only)
+  getCustomers = asyncHandler(async (req: Request, res: Response) => {
+    const result = await this.authService.getAllCustomers();
+    ResponseHandler.success(res, 'Customers fetched successfully', result.data);
+  });
 
   // Logout
   async logout(req: Request, res: Response) {

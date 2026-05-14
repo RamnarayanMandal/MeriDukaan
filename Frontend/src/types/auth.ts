@@ -5,12 +5,12 @@ export interface SignupData {
   email: string
   password: string
   phoneNumber: string
-  role: 'student' | 'teacher' | 'admin'
-  gender: 'male' | 'female' | 'other'
+  role: UserRoles
+  gender: Gender
 }
 
 export interface LoginData {
-  email: string
+  identifier: string // email or phone
   password: string
 }
 
@@ -67,13 +67,15 @@ export interface UserData {
   lastName: string
   email: string
   phoneNumber?: string
-  role: 'student' | 'teacher' | 'admin'
+  role: 'customer' | 'staff' | 'admin'
   gender?: 'male' | 'female' | 'other'
   status?: 'active' | 'inactive' | 'suspended'
   isEmailVerified?: boolean
   profilePicture?: string
   createdAt?: string
   updatedAt?: string
+  bikeModel?: string[]
+  totalVisits?: number
 }
 
 export interface GoogleAuthResponse {
@@ -93,5 +95,23 @@ export interface OTPResponse {
 export interface ProfileResponse {
   success: boolean
   message: string
-  user: UserData
-} 
+  data: {
+    user: UserData
+  }
+}
+
+// export type UserRoles = "customer" | "mechanic" | "admin";
+
+// export type Gender = "MALE" | "FEMALE" | "OTHER";
+
+export enum UserRoles {
+  CUSTOMER = "customer",
+  MECHANIC = "mechanic",
+  STAFF = "staff",
+  ADMIN = "admin",
+}
+export enum Gender {
+  MALE = "MALE",
+  FEMALE = "FEMALE",
+  OTHER = "OTHER",
+}

@@ -10,6 +10,11 @@ export enum ProductUnit {
   SQ_M = 'Sq m',
   BOX = 'Box',
   PIECE = 'Piece',
+  KG = 'Kg',
+  GRAM = 'Gram',
+  LITRE = 'Litre',
+  ML = 'Ml',
+  PACK = 'Pack',
 }
 
 export interface ProductImage {
@@ -21,8 +26,11 @@ export interface ProductImage {
 export interface Product {
   _id: string;
   name: string;
-  category: string; // Changed from ProductCategory enum to string to allow custom categories
+  category: string;
   productCode?: string;
+  sku?: string;
+  barcode: string;
+  brand?: string;
   price: number;
   stockQty: number;
   unit: ProductUnit;
@@ -30,28 +38,41 @@ export interface Product {
   images?: ProductImage[];
   thumbnailImage?: ProductImage;
   shopId?: string;
+  sourceType: 'local' | 'external';
+  isDraftProduct: boolean;
+  gstRate?: number;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface CreateProductData {
   name: string;
-  category: string; // Changed from ProductCategory enum to string to allow custom categories
+  category: string;
   productCode?: string;
+  sku?: string;
+  barcode: string;
+  brand?: string;
   price: number;
   stockQty?: number;
   unit: ProductUnit;
   description?: string;
   shopId?: string;
+  sourceType?: 'local' | 'external';
+  isDraftProduct?: boolean;
+  gstRate?: number;
 }
 
 export interface UpdateProductData {
   name?: string;
-  category?: string; // Changed from ProductCategory enum to string to allow custom categories
+  category?: string;
   productCode?: string;
+  sku?: string;
+  barcode?: string;
+  brand?: string;
   price?: number;
   stockQty?: number;
   unit?: ProductUnit;
   description?: string;
+  gstRate?: number;
 }
 

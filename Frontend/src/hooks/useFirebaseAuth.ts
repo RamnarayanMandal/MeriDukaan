@@ -9,6 +9,7 @@ import { auth, googleProvider } from '@/lib/firebase';
 import { useMutation } from '@tanstack/react-query';
 import authService from '@/service/authService';
 import { AuthResponse } from '@/types';
+import { setAuthData, clearAuthData } from '@/lib/auth';
 
 export const useFirebaseAuth = () => {
   const [user, setUser] = useState<FirebaseUser | null>(null);
@@ -36,9 +37,7 @@ export const useFirebaseAuth = () => {
   const logout = async () => {
     try {
       await signOut(auth);
-      // Clear local storage
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
+      clearAuthData();
     } catch (error) {
       console.error('Logout error:', error);
       throw error;
@@ -62,19 +61,9 @@ export const useFirebaseSignup = () => {
     },
     onSuccess: (data: AuthResponse) => {
       console.log('Firebase signup successful:', data);
-      // Store the JWT token from your backend
-      if (data.data?.token) {
-        localStorage.setItem('token', data.data.token);
-        // Store user data if needed
-        if (data.data.user) {
-          localStorage.setItem('user', JSON.stringify(data.data.user));
-        }
-      } else if (data.token) {
-        // Fallback for old response format
-        localStorage.setItem('token', data.token);
-        if (data.user) {
-          localStorage.setItem('user', JSON.stringify(data.user));
-        }
+      const resData = data.data || data;
+      if (resData.token && resData.user) {
+        setAuthData(resData.token, resData.user);
       }
     },
     onError: (error) => {
@@ -92,19 +81,9 @@ export const useFirebaseLogin = () => {
     },
     onSuccess: (data: AuthResponse) => {
       console.log('Firebase login successful:', data);
-      // Store the JWT token from your backend
-      if (data.data?.token) {
-        localStorage.setItem('token', data.data.token);
-        // Store user data if needed
-        if (data.data.user) {
-          localStorage.setItem('user', JSON.stringify(data.data.user));
-        }
-      } else if (data.token) {
-        // Fallback for old response format
-        localStorage.setItem('token', data.token);
-        if (data.user) {
-          localStorage.setItem('user', JSON.stringify(data.user));
-        }
+      const resData = data.data || data;
+      if (resData.token && resData.user) {
+        setAuthData(resData.token, resData.user);
       }
     },
     onError: (error) => {
@@ -122,23 +101,14 @@ export const useFirebaseAuthMutation = () => {
     },
     onSuccess: (data: AuthResponse) => {
       console.log('Firebase auth successful:', data);
-      // Store the JWT token from your backend
-      if (data.data?.token) {
-        localStorage.setItem('token', data.data.token);
-        // Store user data if needed
-        if (data.data.user) {
-          localStorage.setItem('user', JSON.stringify(data.data.user));
-        }
-      } else if (data.token) {
-        // Fallback for old response format
-        localStorage.setItem('token', data.token);
-        if (data.user) {
-          localStorage.setItem('user', JSON.stringify(data.user));
-        }
+      const resData = data.data || data;
+      if (resData.token && resData.user) {
+        setAuthData(resData.token, resData.user);
       }
     },
     onError: (error) => {
       console.error('Firebase auth error:', error);
     }
   });
-}; 
+};
+ 

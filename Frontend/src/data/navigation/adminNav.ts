@@ -1,23 +1,16 @@
-import { 
-  Building2, 
-  Users, 
-  Home, 
-  Settings, 
-  User,
-  FileText,
-  Calendar,
-  BarChart3,
-  Shield,
-  Bell,
-  CreditCard,
-  MessageSquare,
-  HelpCircle,
+import { NavItemType } from '@/components/ui/nav-item'
+import {
+  Home,
   Store,
   Package,
   Receipt,
-  Info
+  BarChart3,
+  Info,
+  Wrench,
+  Calendar,
+  Settings,
+  MessageSquare
 } from 'lucide-react'
-import { NavItemType } from '@/components/ui/nav-item'
 
 export const adminNavigation: NavItemType[] = [
   {
@@ -36,9 +29,24 @@ export const adminNavigation: NavItemType[] = [
     icon: Package
   },
   {
-    title: "Billing",
-    href: "/admin/bills",
+    title: "Smart Billing",
+    href: "/admin/invoices",
     icon: Receipt
+  },
+  {
+    title: "Garage Services",
+    href: "/admin/services",
+    icon: Wrench
+  },
+  {
+    title: "Appointments",
+    href: "/admin/appointments",
+    icon: Calendar
+  },
+  {
+    title: "Customer Support",
+    href: "/admin/chat",
+    icon: MessageSquare
   },
   {
     title: "Inventory History",
@@ -49,5 +57,10 @@ export const adminNavigation: NavItemType[] = [
     title: "About",
     href: "/admin/about",
     icon: Info
+  },
+  {
+    title: "Shop Settings",
+    href: "/admin/settings",
+    icon: Settings
   }
 ] 

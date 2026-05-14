@@ -41,6 +41,13 @@ export const productService = {
     return response.data.data;
   },
 
+  getProductByBarcode: async (barcode: string, shopId: string): Promise<Product> => {
+    const response = await axiosClient.get(`/products/barcode/${barcode}`, { 
+      params: { shopId } 
+    });
+    return response.data.data;
+  },
+
   updateProduct: async (
     id: string,
     data: UpdateProductData

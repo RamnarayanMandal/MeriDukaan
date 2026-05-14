@@ -7,6 +7,7 @@ const protectedRoutes = [
   '/shop',
   '/products',
   '/bills',
+  '/customer/dashboard',  // Customer protected area
 ]
 
 // Define auth routes (login, signup, etc.)
@@ -14,7 +15,9 @@ const authRoutes = [
   '/auth/login',
   '/auth/signup',
   '/auth/forget-password',
-  '/auth/opt-vefication'
+  '/auth/otp-verification',
+  '/customer/login',
+  '/customer/signup',
 ]
 
 // Function to check if route is protected

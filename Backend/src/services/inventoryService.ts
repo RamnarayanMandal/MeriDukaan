@@ -8,26 +8,41 @@ import {
 import { InventoryHistory } from '../models/InventoryHistory';
 import { Shop } from '../models/Shop';
 import mongoose from 'mongoose';
+import { BarcodeApiService } from './BarcodeApiService';
 
 export interface CreateProductData {
   shopId: string;
   name: string;
-  category: string; // Changed from ProductCategory enum to string
+  category: string;
   productCode?: string;
+  sku?: string;
+  barcode: string;
+  brand?: string;
   price: number;
   stockQty?: number;
   unit: ProductUnit;
   description?: string;
+  sourceType?: 'local' | 'external';
+  isDraftProduct?: boolean;
+  gstRate?: number;
+  images?: IProductImage[];
+  thumbnailImage?: IProductImage;
 }
 
 export interface UpdateProductData {
   name?: string;
-  category?: string; // Changed from ProductCategory enum to string
+  category?: string;
   productCode?: string;
+  sku?: string;
+  barcode?: string;
+  brand?: string;
   price?: number;
   stockQty?: number;
   unit?: ProductUnit;
   description?: string;
+  gstRate?: number;
+  images?: IProductImage[];
+  thumbnailImage?: IProductImage;
 }
 
 export class InventoryService {
@@ -39,6 +54,10 @@ export class InventoryService {
       ...data,
       shopId: new mongoose.Types.ObjectId(data.shopId),
       stockQty: data.stockQty || 0,
+      sourceType: data.sourceType || 'local',
+      isDraftProduct: data.isDraftProduct || false,
+      images: data.images || [],
+      thumbnailImage: data.thumbnailImage,
     });
 
     // create inventory history entry if initial stock is provided and > 0
@@ -53,17 +72,20 @@ export class InventoryService {
       });
     }
 
+    // Invalidate Cache
+    const { CacheService } = await import('../shared/cache/cache.service');
+    await CacheService.invalidatePattern('products:*');
+
     return product;
   }
 
   /**
    * Get all products with optional filters
-   * If userId is provided, only show products from shops owned by that user
    */
   static async getProducts(
     filters?: {
       shopId?: string;
-      category?: string; // Changed from ProductCategory enum to string
+      category?: string;
       search?: string;
       startDate?: string;
       endDate?: string;
@@ -100,7 +122,6 @@ export class InventoryService {
         query.shopId = { $in: shopIds };
       }
     } else if (filters?.shopId) {
-      // No userId but shopId provided - use as is (for backward compatibility)
       query.shopId = new mongoose.Types.ObjectId(filters.shopId);
     }
 
@@ -112,6 +133,7 @@ export class InventoryService {
       query.$or = [
         { name: { $regex: filters.search, $options: 'i' } },
         { productCode: { $regex: filters.search, $options: 'i' } },
+        { barcode: { $regex: filters.search, $options: 'i' } },
       ];
     }
 
@@ -122,7 +144,6 @@ export class InventoryService {
         query.createdAt.$gte = new Date(filters.startDate);
       }
       if (filters.endDate) {
-        // Include the entire end date (set to end of day)
         const endDate = new Date(filters.endDate);
         endDate.setHours(23, 59, 59, 999);
         query.createdAt.$lte = endDate;
@@ -132,15 +153,31 @@ export class InventoryService {
     const page = filters?.page && filters.page > 0 ? filters.page : 1;
     const limit = filters?.limit && filters.limit > 0 ? filters.limit : 10;
 
-    const [items, totalCount] = await Promise.all([
-      Product.find(query)
-        .sort({ createdAt: -1 })
-        .skip((page - 1) * limit)
-        .limit(limit),
-      Product.countDocuments(query),
-    ]);
+    // Cache Implementation
+    const cacheKey = `products:${filters?.shopId || 'all'}:${filters?.category || 'all'}:${filters?.search || ''}:${page}:${limit}`;
+    const { CacheService } = await import('../shared/cache/cache.service');
+    const cachedData = await CacheService.get(cacheKey);
+    if (cachedData) return cachedData as any;
 
-    return { items, page, limit, totalCount };
+    const { PaginationUtil } = await import('../shared/pagination/pagination.util');
+    const paginatedResult = await PaginationUtil.paginate(Product, query, {
+      page,
+      limit,
+      sort: { createdAt: -1 }
+    });
+
+    const result = {
+      items: paginatedResult.data,
+      page: paginatedResult.meta.page,
+      limit: paginatedResult.meta.limit,
+      totalCount: paginatedResult.meta.total,
+      meta: paginatedResult.meta
+    };
+
+    // Cache for 1 hour
+    await CacheService.set(cacheKey, result, 3600);
+
+    return result;
   }
 
   /**
@@ -148,6 +185,42 @@ export class InventoryService {
    */
   static async getProductById(id: string): Promise<IProduct | null> {
     return await Product.findById(id);
+  }
+
+  /**
+   * Get product by Barcode with External API Fallback
+   */
+  static async getProductByBarcode(barcode: string, shopId: string): Promise<IProduct | null> {
+    const query: any = { barcode, shopId: new mongoose.Types.ObjectId(shopId) };
+
+    // 1. Check local database first
+    const product = await Product.findOne(query);
+    if (product) {
+      return product;
+    }
+
+    // 2. If not found, try external API
+    const externalData = await BarcodeApiService.fetchFromExternal(barcode);
+    if (externalData) {
+      // Create a draft product for this shop
+      const draftProduct = await Product.create({
+        name: externalData.name,
+        brand: externalData.brand,
+        category: externalData.category || 'External',
+        barcode: barcode,
+        price: 0,
+        stockQty: 0,
+        unit: ProductUnit.PIECE,
+        shopId: new mongoose.Types.ObjectId(shopId),
+        sourceType: 'external',
+        isDraftProduct: true,
+        description: `Imported from external barcode database.`,
+      });
+
+      return draftProduct;
+    }
+
+    return null;
   }
 
   /**
@@ -192,6 +265,11 @@ export class InventoryService {
       product.description = data.description;
 
     await product.save();
+
+    // Invalidate Cache
+    const { CacheService } = await import('../shared/cache/cache.service');
+    await CacheService.invalidatePattern('products:*');
+
     return product;
   }
 
@@ -216,6 +294,11 @@ export class InventoryService {
     }
 
     await product.deleteOne();
+
+    // Invalidate Cache
+    const { CacheService } = await import('../shared/cache/cache.service');
+    await CacheService.invalidatePattern('products:*');
+
     return true;
   }
 
@@ -252,6 +335,10 @@ export class InventoryService {
       newStock,
       referenceId: referenceId ? new mongoose.Types.ObjectId(referenceId) : null,
     });
+
+    // Invalidate Cache
+    const { CacheService } = await import('../shared/cache/cache.service');
+    await CacheService.invalidatePattern('products:*');
 
     return product;
   }

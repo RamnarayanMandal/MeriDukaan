@@ -1,10 +1,13 @@
 import express from 'express';
 import cors from 'cors';
 import mongoose from 'mongoose';
+import http from 'http';
+import { SocketService } from './src/socket/socket.service';
 import { config } from './src/config/env';
 import router from './src/routes/index';
 import { initializeSystemRoles } from './src/utils/initializeRoles';
 import { globalErrorHandler, notFoundHandler } from './src/middlewares/errorHandler';
+import { redisClient } from './src/shared/redis/redis.client';
 
 const app = express();
 
@@ -55,16 +58,29 @@ const startServer = async () => {
   try {
     await mongoose.connect(config.database.uri);
     console.log('✅ MongoDB connected successfully');
-    
+
+    // Connect Redis
+
+    try {
+      await redisClient.connect();
+    } catch (err) {
+      console.warn('⚠️ Redis failed to connect. Running without cache.', err.message);
+    }
+
     // Initialize system roles
     await initializeSystemRoles();
+
+    const server = http.createServer(app);
     
-    app.listen(config.server.port, () => {
+    // Initialize Socket.io
+    SocketService.initialize(server);
+
+    server.listen(config.server.port, () => {
       console.log(`🚀 Server started on port ${config.server.port}`);
       console.log(`🌍 Environment: ${config.server.nodeEnv}`);
       console.log(`📧 Email service: ${config.email.host}:${config.email.port}`);
       console.log(`🔐 JWT expires in: ${config.jwt.expiresIn}`);
-      console.log(`👥 Shop Management System ready`);
+      console.log(`👥 Shop Management System ready with Socket.io`);
     });
   } catch (error) {
     console.error('❌ Failed to start server:', error);

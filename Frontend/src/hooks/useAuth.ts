@@ -3,6 +3,7 @@ import authService from '@/service/authService'
 import {
   AuthResponse,
 } from '@/types'
+import { setAuthData, clearAuthData } from '@/lib/auth'
 
 // Define error type
 type ApiError = {
@@ -72,7 +73,7 @@ export const useGetProfile = () => {
   return useQuery({
     queryKey: ['user-profile'],
     queryFn: authService.getProfile,
-    enabled: !!localStorage.getItem('token'), // Only run if token exists
+    enabled: typeof window !== 'undefined' && !!localStorage.getItem('token'), // Only run if token exists and in browser
   })
 }
 
@@ -101,6 +102,14 @@ export const useChangePassword = () => {
       console.error('Password change error:', error)
       // You can add error handling here (show toast, etc.)
     }
+  })
+}
+
+export const useGetCustomers = () => {
+  return useQuery({
+    queryKey: ['all-customers'],
+    queryFn: authService.getCustomers,
+    enabled: typeof window !== 'undefined' && !!localStorage.getItem('token'),
   })
 }
 
@@ -193,21 +202,13 @@ export const useFirebaseAuth = () => {
     mutationFn: authService.firebaseAuth,
     onSuccess: (data: AuthResponse) => {
       console.log('Firebase auth successful:', data)
-      // Store token if provided
-      if (data.data?.token) {
-        localStorage.setItem('token', data.data.token)
-        // Store user data if needed
-        if (data.data.user) {
-          localStorage.setItem('user', JSON.stringify(data.data.user))
-        }
-      } else if (data.token) {
-        // Fallback for old response format
-        localStorage.setItem('token', data.token)
-        if (data.user) {
-          localStorage.setItem('user', JSON.stringify(data.user))
-        }
+      const responseData = data.data || data;
+      const token = responseData.token;
+      const user = responseData.user;
+
+      if (token && user) {
+        setAuthData(token, user);
       }
-      // You can add success handling here (redirect, show toast, etc.)
     },
     onError: (error: ApiError) => {
       console.error('Firebase auth error:', error)

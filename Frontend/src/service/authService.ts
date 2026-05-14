@@ -109,6 +109,12 @@ export const authService = {
   firebaseLogin: async (idToken: string): Promise<AuthResponse> => {
     const response = await axiosClient.post<AuthResponse>('/firebase/login', { idToken })
     return response.data
+  },
+
+  // Get all customers (Admin only)
+  getCustomers: async (): Promise<any> => {
+    const response = await axiosClient.get<any>('/auth/customers')
+    return response.data
   }
 }
 

@@ -17,6 +17,7 @@ export interface IShop extends mongoose.Document {
   gstNo?: string;
   email?: string;
   owner: mongoose.Types.ObjectId;
+  upiId?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -75,6 +76,10 @@ const shopSchema = new mongoose.Schema<IShop>(
       ref: 'User',
       required: [true, 'Shop owner is required'],
       index: true,
+    },
+    upiId: {
+      type: String,
+      trim: true,
     },
   },
   {

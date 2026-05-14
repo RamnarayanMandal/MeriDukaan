@@ -7,6 +7,7 @@ import { EmailService } from './emailService';
 import { SmsService } from './smsService';
 import { GoogleOAuthService } from './googleOAuthService';
 import { ValidationError, UnauthorizedError, NotFoundError, ConflictError } from '../middlewares/errorHandler';
+import { USER_ROLE } from '../types/enum';
 
 
 export class AuthService {
@@ -48,6 +49,8 @@ export class AuthService {
   // Signup
   async signup(userData: SignupInput) {
     try {
+      const isCustomer = !userData.role || userData.role === USER_ROLE.CUSTOMER;
+
       // Check if user already exists
       const existingUser = await User.findOne({ email: userData.email });
       if (existingUser) {
@@ -62,81 +65,92 @@ export class AuthService {
         }
       }
 
-      // Hash password
-      const hashedPassword = await this.hashPassword(userData.password);
+      // Hash password (Removed manual hashing to let User model pre-save hook handle it)
+      // const hashedPassword = await this.hashPassword(userData.password);
 
-      // Create user
+      // Create user — OTP verification is skipped as per request
       const user = new User({
         ...userData,
-        password: hashedPassword,
-        isEmailVerified: false,
-        isPhoneVerified: false,
+        // password: hashedPassword,
+        role: userData.role || USER_ROLE.CUSTOMER,
+        isEmailVerified: true, // Auto-verify all users
+        isPhoneVerified: true, // Auto-verify all users
       });
 
       await user.save();
 
-      // Generate and send email verification OTP
-      const emailOTP = this.generateOTP();
-      user.emailVerificationToken = emailOTP;
-      user.emailVerificationExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
-      await user.save();
-
-      // Send email verification
-      await this.emailService.sendVerificationEmail(userData.email, emailOTP);
-
-      // Generate and send phone verification OTP
-      const phoneOTP = this.generateOTP();
-      user.phoneVerificationOTP = phoneOTP;
-      user.phoneVerificationExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
-      await user.save();
-
-      // Send SMS verification
-      if (userData.phoneNumber) {
-        await this.smsService.sendVerificationSMS(userData.phoneNumber, phoneOTP);
-      }
+      // Return success without OTP
+      const token = this.generateToken(user._id.toString(), user.email, user.role);
 
       return {
         success: true,
-        message: 'User registered successfully. Please verify your email and phone number.',
-        userId: user._id,
+        message: 'Account created successfully. You can now login.',
+        data: {
+          token,
+          user: {
+            id: user._id,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            email: user.email,
+            phoneNumber: user.phoneNumber,
+            role: user.role,
+            bikeModel: (user as any).bikeModel,
+            address: user.address,
+          },
+        },
       };
     } catch (error) {
       throw error;
     }
   }
 
-  // Login
+  // Login — accepts email OR phone number
   async login(loginData: LoginInput) {
     try {
-      // Find user by email
-      const user = await User.findOne({ email: loginData.email });
+      const identifier = loginData.identifier.trim();
+      const isPhone = /^[6-9]\d{9}$/.test(identifier);
+
+      console.log('Login Attempt - Identifier:', identifier, 'isPhone:', isPhone);
+
+      // Find user by email or phone
+      const user = await User.findOne(
+        isPhone ? { phoneNumber: identifier } : { email: identifier.toLowerCase() }
+      );
+
       if (!user) {
-        throw new UnauthorizedError('Invalid email or password');
+        console.log('Login Failed - User not found in database');
+        throw new UnauthorizedError('Invalid credentials. Please check your email/phone and password.');
       }
+
+      console.log('User Found:', {
+        email: user.email,
+        phoneNumber: user.phoneNumber,
+        hasPassword: !!user.password,
+        role: user.role
+      });
 
       // Check if account is locked
       if (user.lockUntil && user.lockUntil > new Date()) {
+        console.log('Login Failed - Account Locked until:', user.lockUntil);
         throw new UnauthorizedError('Account is temporarily locked. Please try again later.');
       }
 
-      // Check if user has password (for Google OAuth users)
+      // Check if user has password
       if (!user.password) {
         throw new UnauthorizedError('Please login with Google or reset your password');
       }
 
       // Verify password
       const isPasswordValid = await this.comparePassword(loginData.password, user.password);
+      console.log('Password Comparison Result:', isPasswordValid);
+
       if (!isPasswordValid) {
-        // Increment login attempts
         user.loginAttempts += 1;
-        
-        // Lock account after 5 failed attempts
         if (user.loginAttempts >= 5) {
-          user.lockUntil = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+          user.lockUntil = new Date(Date.now() + 15 * 60 * 1000);
         }
-        
         await user.save();
-        throw new UnauthorizedError('Invalid email or password');
+        throw new UnauthorizedError('Invalid credentials. Please check your email/phone and password.');
       }
 
       // Reset login attempts on successful login
@@ -144,11 +158,10 @@ export class AuthService {
       user.lockUntil = undefined;
       await user.save();
 
-      // Check if email is verified
-      if (!user.isEmailVerified) {
-        // Resend OTP and throw error to indicate verification needed
+      // Admin users must verify email before logging in
+      if (user.role === USER_ROLE.ADMIN && !user.isEmailVerified) {
         await this.resendEmailOTP(user.email);
-        throw new UnauthorizedError('Email verification required. A new verification code has been sent to your email. Please verify your email and try logging in again.');
+        throw new UnauthorizedError('Email verification required. A new verification code has been sent to your email.');
       }
 
       // Generate token
@@ -157,15 +170,22 @@ export class AuthService {
       return {
         success: true,
         message: 'Login successful',
-        token,
-        user: {
-          id: user._id,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          email: user.email,
-          role: user.role,
-          isEmailVerified: user.isEmailVerified,
-          isPhoneVerified: user.isPhoneVerified,
+        data: {
+          token,
+          user: {
+            id: user._id,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            email: user.email,
+            phoneNumber: user.phoneNumber,
+            role: user.role,
+            isEmailVerified: user.isEmailVerified,
+            isPhoneVerified: user.isPhoneVerified,
+            bikeModel: (user as any).bikeModel,
+            address: user.address,
+            totalVisits: (user as any).totalVisits,
+            status: user.status,
+          },
         },
       };
     } catch (error) {
@@ -177,7 +197,7 @@ export class AuthService {
   async verifyEmailOTP(verificationData: OtpVerificationInput) {
     try {
       console.log('Verifying email OTP for:', verificationData.email);
-      
+
       const user = await User.findOne({ email: verificationData.email });
       if (!user) {
         throw new NotFoundError('User not found');
@@ -372,11 +392,8 @@ export class AuthService {
         throw new ValidationError('Invalid or expired reset token');
       }
 
-      // Hash new password
-      const hashedPassword = await this.hashPassword(resetPasswordData.password);
-
-      // Update password and clear reset token
-      user.password = hashedPassword;
+      // Update password and clear reset token (Removed manual hashing, model handles it)
+      user.password = resetPasswordData.password;
       user.resetPasswordToken = undefined;
       user.resetPasswordExpires = undefined;
       user.loginAttempts = 0;
@@ -414,11 +431,8 @@ export class AuthService {
         throw new UnauthorizedError('Current password is incorrect');
       }
 
-      // Hash new password
-      const hashedPassword = await this.hashPassword(changePasswordData.newPassword);
-
-      // Update password
-      user.password = hashedPassword;
+      // Update password (Removed manual hashing, model handles it)
+      user.password = changePasswordData.newPassword;
       await user.save();
 
       return {
@@ -457,15 +471,21 @@ export class AuthService {
       return {
         success: true,
         message: 'Profile updated successfully',
-        user: {
-          id: user._id,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          email: user.email,
-          phoneNumber: user.phoneNumber,
-          role: user.role,
-          isEmailVerified: user.isEmailVerified,
-          isPhoneVerified: user.isPhoneVerified,
+        data: {
+          user: {
+            id: user._id,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            email: user.email,
+            phoneNumber: user.phoneNumber,
+            role: user.role,
+            isEmailVerified: user.isEmailVerified,
+            isPhoneVerified: user.isPhoneVerified,
+            bikeModel: (user as any).bikeModel,
+            address: user.address,
+            totalVisits: (user as any).totalVisits,
+            status: user.status,
+          },
         },
       };
     } catch (error) {
@@ -485,7 +505,7 @@ export class AuthService {
       if (!user) {
         // Check if user exists with same email
         user = await User.findOne({ email: googleUser.email });
-        
+
         if (user) {
           // Link Google account to existing user
           user.googleId = googleUser.id;
@@ -500,7 +520,7 @@ export class AuthService {
             googleId: googleUser.id,
             isEmailVerified: true,
             isPhoneVerified: false,
-            role: 'user',
+            role: USER_ROLE.CUSTOMER,
             status: 'active',
             gender: 'other',
             phoneNumber: '', // Will need to be updated later
@@ -515,15 +535,21 @@ export class AuthService {
       return {
         success: true,
         message: 'Google login successful',
-        token,
-        user: {
-          id: user._id,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          email: user.email,
-          role: user.role,
-          isEmailVerified: user.isEmailVerified,
-          isPhoneVerified: user.isPhoneVerified,
+        data: {
+          token,
+          user: {
+            id: user._id,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            email: user.email,
+            role: user.role,
+            isEmailVerified: user.isEmailVerified,
+            isPhoneVerified: user.isPhoneVerified,
+            bikeModel: (user as any).bikeModel,
+            address: user.address,
+            totalVisits: (user as any).totalVisits,
+            status: user.status,
+          },
         },
       };
     } catch (error) {
@@ -535,14 +561,30 @@ export class AuthService {
   async getUserProfile(userId: string) {
     try {
       const user = await User.findById(userId).select('-password -emailVerificationToken -emailVerificationExpires -phoneVerificationOTP -phoneVerificationExpires -resetPasswordToken -resetPasswordExpires');
-      
+
       if (!user) {
         throw new NotFoundError('User not found');
       }
 
       return {
         success: true,
-        user,
+        data: {
+          user: {
+            id: user._id,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            email: user.email,
+            phoneNumber: user.phoneNumber,
+            role: user.role,
+            isEmailVerified: user.isEmailVerified,
+            isPhoneVerified: user.isPhoneVerified,
+            bikeModel: (user as any).bikeModel,
+            address: user.address,
+            totalVisits: (user as any).totalVisits,
+            status: user.status,
+            createdAt: (user as any).createdAt,
+          },
+        },
       };
     } catch (error) {
       throw error;
@@ -553,12 +595,28 @@ export class AuthService {
   async getUserByEmail(email: string) {
     try {
       const user = await User.findOne({ email }).select('-password -emailVerificationToken -emailVerificationExpires -phoneVerificationOTP -phoneVerificationExpires -resetPasswordToken -resetPasswordExpires');
-      
+
       if (!user) {
         throw new NotFoundError('User not found');
       }
 
       return user;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  // Get all customers (Admin only)
+  async getAllCustomers() {
+    try {
+      const customers = await User.find({ role: USER_ROLE.CUSTOMER })
+        .select('firstName lastName email phoneNumber profilePicture bikeModel createdAt')
+        .sort({ firstName: 1 });
+      
+      return {
+        success: true,
+        data: customers,
+      };
     } catch (error) {
       throw error;
     }

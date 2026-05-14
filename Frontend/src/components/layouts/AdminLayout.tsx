@@ -20,6 +20,8 @@ import {
   
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { useNotifications } from '@/hooks/useNotifications'
+import { NotificationDrawer } from '@/components/notifications/NotificationDrawer'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { 
@@ -35,16 +37,20 @@ import { clearAuthData, getUser } from '@/lib/auth'
 import { useEffect, useState } from 'react'
 import { Breadcrumb } from '@/components/ui/breadcrumb'
 import { UserData } from '@/types/auth'
-import { useShop } from '@/hooks/useShop'
 
 interface AdminLayoutProps {
   children: React.ReactNode
 }
 
+import { useSettings } from '@/context/ShopSettingsContext'
+
 export default function AdminLayout({ children }: AdminLayoutProps) {
   const router = useRouter()
   const [user, setUser] = useState<UserData | null>(null)
-  const { data: shop } = useShop()
+  const { settings } = useSettings()
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false)
+  const { data: notificationData } = useNotifications()
+  const unreadCount = notificationData?.unreadCount || 0
 
   useEffect(() => {
     const userData = getUser()
@@ -62,22 +68,24 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       <div className="hidden md:flex md:w-64 md:flex-col">
         <div className="flex flex-col flex-grow pt-5 bg-white overflow-y-auto border-r border-gray-200">
           <SidebarHeader>
-            <div className="flex items-center space-x-3">
-              {shop?.logoUrl || shop?.logo ? (
-                <img
-                  src={shop.logoUrl || shop.logo || ''}
-                  alt={shop.shopName}
-                  className="h-8 w-8 rounded-full object-cover border"
-                />
-              ) : (
-                <Building2 className="h-8 w-8 text-blue-600" />
-              )}
-              <div className="flex flex-col">
-                <span className="text-sm font-medium text-gray-500">
-                  Shop Management
+            <div className="flex items-center space-x-3 px-4">
+              <div className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: settings.themeColors.primary }}>
+                {settings.logo ? (
+                  <img
+                    src={settings.logo}
+                    alt={settings.shopName}
+                    className="h-7 w-7 object-contain"
+                  />
+                ) : (
+                  <Building2 className="h-6 w-6 text-white" />
+                )}
+              </div>
+              <div className="flex flex-col truncate">
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                  Control Panel
                 </span>
-                <span className="text-base font-semibold text-gray-900 truncate max-w-[160px]">
-                  {shop?.shopName || 'My Shop'}
+                <span className="text-sm font-bold text-gray-900 truncate">
+                  {settings.shopName}
                 </span>
               </div>
             </div>
@@ -114,20 +122,26 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               <SidebarMobile>
                 <Navigation navigation={adminNavigation} />
               </SidebarMobile>
-              {shop && (
-                <div className="hidden sm:flex flex-col">
-                  <span className="text-xs text-gray-500">Current shop</span>
-                  <span className="text-sm font-semibold text-gray-900 truncate max-w-[180px]">
-                    {shop.shopName}
-                  </span>
-                </div>
-              )}
+              <div className="hidden sm:flex flex-col">
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Store</span>
+                <span className="text-sm font-bold text-gray-900 truncate max-w-[180px]">
+                  {settings.shopName}
+                </span>
+              </div>
             </div>
             
             <div className="flex justify-end items-center space-x-4">
-              <Button variant="ghost" size="sm">
+              <button 
+                onClick={() => setIsNotificationOpen(true)}
+                className="relative p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-colors"
+              >
                 <Bell className="h-5 w-5" />
-              </Button>
+                {unreadCount > 0 && (
+                  <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-blue-600 text-[10px] font-bold text-white ring-2 ring-white">
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
               
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -177,6 +191,10 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           </div>
         </main>
       </div>
+      <NotificationDrawer 
+        isOpen={isNotificationOpen} 
+        onClose={() => setIsNotificationOpen(false)} 
+      />
     </div>
   )
 } 
