@@ -1,19 +1,19 @@
 "use client"
 
 import React from 'react'
-import { 
-  Sidebar, 
-  SidebarContent, 
-  SidebarHeader, 
-  SidebarFooter, 
-  SidebarMobile 
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarHeader,
+  SidebarFooter,
+  SidebarMobile
 } from '@/components/ui/sidebar'
 import { Navigation } from '@/components/ui/nav-item'
 import { adminNavigation } from '@/data/navigation/adminNav'
-import { 
-  Building2, 
-  Settings, 
-  LogOut, 
+import {
+  Building2,
+  Settings,
+  LogOut,
   User,
   Bell,
   Share2,
@@ -25,7 +25,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { useNotifications } from '@/hooks/useNotifications'
 import { NotificationDrawer } from '@/components/notifications/NotificationDrawer'
-import { 
+import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -36,13 +36,13 @@ import { Input } from "@/components/ui/input"
 import { showSuccess } from "@/lib/sweetAlert"
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuLabel, 
-  DropdownMenuSeparator, 
-  DropdownMenuTrigger 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
 import { useRouter } from 'next/navigation'
 import { clearAuthData, getUser } from '@/lib/auth'
@@ -74,29 +74,29 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     router.push('/auth/login')
   }
 
-    const [isCopied, setIsCopied] = useState(false)
-    const websiteUrl = typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.host}` : ''
+  const [isCopied, setIsCopied] = useState(false)
+  const websiteUrl = typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.host}` : ''
 
-    const handleCopyLink = () => {
-      navigator.clipboard.writeText(websiteUrl)
-      setIsCopied(true)
-      showSuccess("Copied!", "Link copied to clipboard")
-      setTimeout(() => setIsCopied(false), 2000)
-    }
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(websiteUrl)
+    setIsCopied(true)
+    showSuccess("Copied!", "Link copied to clipboard")
+    setTimeout(() => setIsCopied(false), 2000)
+  }
 
-    const shareOnWhatsApp = () => {
-      const text = encodeURIComponent(`Check out ${settings.shopName}!\n\nVisit Website: ${websiteUrl}\nDownload Mobile App: ${websiteUrl}/download`)
-      window.open(`https://wa.me/?text=${text}`, '_blank')
-    }
+  const shareOnWhatsApp = () => {
+    const text = encodeURIComponent(`Check out ${settings.shopName}!\n\nVisit Website: ${websiteUrl}\nDownload Mobile App: ${websiteUrl}/download`)
+    window.open(`https://wa.me/?text=${text}`, '_blank')
+  }
 
-    const shareViaEmail = () => {
-      const subject = encodeURIComponent(`Check out ${settings.shopName}`)
-      const body = encodeURIComponent(`I thought you might be interested in ${settings.shopName}.\n\nVisit Website: ${websiteUrl}\nDownload Mobile App: ${websiteUrl}/download`)
-      window.location.href = `mailto:?subject=${subject}&body=${body}`
-    }
+  const shareViaEmail = () => {
+    const subject = encodeURIComponent(`Check out ${settings.shopName}`)
+    const body = encodeURIComponent(`I thought you might be interested in ${settings.shopName}.\n\nVisit Website: ${websiteUrl}\nDownload Mobile App: ${websiteUrl}/download`)
+    window.location.href = `mailto:?subject=${subject}&body=${body}`
+  }
 
-    return (
-      <div className="flex h-screen bg-gray-100">
+  return (
+    <div className="flex h-screen bg-gray-100">
       {/* Desktop Sidebar */}
       <div className="hidden md:flex md:w-64 md:flex-col">
         <div className="flex flex-col flex-grow pt-5 bg-white overflow-y-auto border-r border-gray-200">
@@ -124,7 +124,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             </div>
 
           </SidebarHeader>
-          
+
           <SidebarContent>
             <Sidebar>
               <Navigation navigation={adminNavigation} />
@@ -132,8 +132,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           </SidebarContent>
 
           <SidebarFooter>
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               className="w-full justify-start gap-2 text-red-600 hover:text-red-700 hover:bg-red-50"
               onClick={handleLogout}
             >
@@ -144,7 +144,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         </div>
       </div>
 
-      
+
 
       {/* Main Content */}
       <div className="flex flex-col flex-1 overflow-hidden">
@@ -162,7 +162,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 </span>
               </div>
             </div>
-            
+
             <div className="flex justify-end items-center space-x-4">
               <Dialog>
                 <DialogTrigger asChild>
@@ -223,16 +223,16 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                     </div>
 
                     <div className="grid grid-cols-2 gap-4 pt-2">
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         className="rounded-2xl h-12 gap-2 border-green-100 hover:bg-green-50 hover:text-green-600 hover:border-green-200"
                         onClick={shareOnWhatsApp}
                       >
                         <MessageCircle className="h-5 w-5 text-green-500" />
                         WhatsApp
                       </Button>
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         className="rounded-2xl h-12 gap-2 border-blue-100 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200"
                         onClick={shareViaEmail}
                       >
@@ -244,7 +244,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 </DialogContent>
               </Dialog>
 
-              <button 
+              <button
                 onClick={() => setIsNotificationOpen(true)}
                 className="relative p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-colors"
               >
@@ -255,7 +255,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                   </span>
                 )}
               </button>
-              
+
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-8 w-8 rounded-full">
@@ -272,7 +272,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                         {user?.firstName ? `${user.firstName} ${user.lastName || ''}` : 'Admin User'}
                       </p>
                       <p className="text-xs leading-none text-muted-foreground">
-                        {user?.email || 'admin@hostelhub.com'}
+                        {user?.email || 'admin@meridukaan.com'}
                       </p>
                     </div>
                   </DropdownMenuLabel>
@@ -304,9 +304,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           </div>
         </main>
       </div>
-      <NotificationDrawer 
-        isOpen={isNotificationOpen} 
-        onClose={() => setIsNotificationOpen(false)} 
+      <NotificationDrawer
+        isOpen={isNotificationOpen}
+        onClose={() => setIsNotificationOpen(false)}
       />
     </div>
   )

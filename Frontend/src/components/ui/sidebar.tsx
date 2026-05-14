@@ -6,7 +6,8 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { Building2, Menu} from "lucide-react"
+import { Building2, Menu } from "lucide-react"
+import Image from "next/image"
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode
@@ -97,8 +98,7 @@ export function SidebarMobile({ children, trigger }: SidebarMobileProps) {
       <SheetContent side="left" className="w-72 p-0">
         <SidebarHeader>
           <div className="flex items-center space-x-2 py-4">
-            <Building2 className="h-8 w-8 text-green-600" />
-            <span className="text-xl font-bold text-gray-900">HostelHub</span>
+            <Image src="/logo.png" alt="Logo" width={32} height={32} />
           </div>
         </SidebarHeader>
         <SidebarContent>
