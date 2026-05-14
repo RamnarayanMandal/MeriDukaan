@@ -12,16 +12,28 @@ import { Navigation } from '@/components/ui/nav-item'
 import { adminNavigation } from '@/data/navigation/adminNav'
 import { 
   Building2, 
- 
   Settings, 
   LogOut, 
   User,
   Bell,
-  
+  Share2,
+  Copy,
+  Check,
+  MessageCircle,
+  Mail
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useNotifications } from '@/hooks/useNotifications'
 import { NotificationDrawer } from '@/components/notifications/NotificationDrawer'
+import { 
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { showSuccess } from "@/lib/sweetAlert"
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { 
@@ -62,8 +74,29 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     router.push('/auth/login')
   }
 
-  return (
-    <div className="flex h-screen bg-gray-100">
+    const [isCopied, setIsCopied] = useState(false)
+    const websiteUrl = typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.host}` : ''
+
+    const handleCopyLink = () => {
+      navigator.clipboard.writeText(websiteUrl)
+      setIsCopied(true)
+      showSuccess("Copied!", "Link copied to clipboard")
+      setTimeout(() => setIsCopied(false), 2000)
+    }
+
+    const shareOnWhatsApp = () => {
+      const text = encodeURIComponent(`Check out ${settings.shopName}: ${websiteUrl}`)
+      window.open(`https://wa.me/?text=${text}`, '_blank')
+    }
+
+    const shareViaEmail = () => {
+      const subject = encodeURIComponent(`Check out ${settings.shopName}`)
+      const body = encodeURIComponent(`I thought you might be interested in ${settings.shopName}. Visit here: ${websiteUrl}`)
+      window.location.href = `mailto:?subject=${subject}&body=${body}`
+    }
+
+    return (
+      <div className="flex h-screen bg-gray-100">
       {/* Desktop Sidebar */}
       <div className="hidden md:flex md:w-64 md:flex-col">
         <div className="flex flex-col flex-grow pt-5 bg-white overflow-y-auto border-r border-gray-200">
@@ -131,6 +164,60 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             </div>
             
             <div className="flex justify-end items-center space-x-4">
+              <Dialog>
+                <DialogTrigger asChild>
+                  <button className="p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-colors relative group">
+                    <Share2 className="h-5 w-5" />
+                    <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                      Share Website
+                    </span>
+                  </button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md rounded-3xl">
+                  <DialogHeader>
+                    <DialogTitle className="text-xl font-bold flex items-center gap-2">
+                      <Share2 className="h-5 w-5 text-blue-600" />
+                      Share Website
+                    </DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-6 py-4">
+                    <div className="flex items-center space-x-2">
+                      <div className="grid flex-1 gap-2">
+                        <Input
+                          id="link"
+                          defaultValue={websiteUrl}
+                          readOnly
+                          className="bg-gray-50 border-gray-200 rounded-xl"
+                        />
+                      </div>
+                      <Button size="sm" className="px-3 rounded-xl bg-blue-600 hover:bg-blue-700" onClick={handleCopyLink}>
+                        <span className="sr-only">Copy</span>
+                        {isCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                      </Button>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <Button 
+                        variant="outline" 
+                        className="rounded-2xl h-12 gap-2 border-green-100 hover:bg-green-50 hover:text-green-600 hover:border-green-200"
+                        onClick={shareOnWhatsApp}
+                      >
+                        <MessageCircle className="h-5 w-5 text-green-500" />
+                        WhatsApp
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        className="rounded-2xl h-12 gap-2 border-blue-100 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200"
+                        onClick={shareViaEmail}
+                      >
+                        <Mail className="h-5 w-5 text-blue-500" />
+                        Email
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+
               <button 
                 onClick={() => setIsNotificationOpen(true)}
                 className="relative p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-colors"
